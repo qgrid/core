@@ -1,0 +1,33 @@
+{
+  "name": "qgrid-core",
+  "version": "1.0.0",
+  "description": "qgrid core",
+  "main": "./src/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qgrid/core.git"
+  },
+  "keywords": [
+    "core",
+    "grid",
+    "data",
+    "table",
+    "javascript",
+    "qgrid"
+  ],
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/qgrid/core/issues"
+  },
+  "homepage": "https://github.com/qgrid/core#readme",
+  "license": "MIT",
+  "scripts": {  },
+  "dependencies": {
+  },
+  "devDependencies": {
+  },
+  "engines": {
+    "node": ">= 4.2.1",
+    "npm": ">= 3"
+  }
+}
