@@ -1,16 +1,20 @@
-import {View} from '../view/view';
-import {Command} from '../command/command';
-import {Model} from '../infrastructure/model';
-import {Table} from '../dom/table';
+import { Command } from '../command/command';
+import { Model } from '../infrastructure/model';
+import { Table } from '../dom/table';
+import { ColumnModel } from '../column-type/column.model';
+import { ColumnView } from '../scene/view/column.view';
 
 /**
  * > Under Construction.
  */
-export declare class HeadView extends View {
-  constructor(model: Model, table: Table, tagName: string);
+export declare class HeadView {
+	constructor(model: Model, table: Table, tagName: string);
 
-  rows: any[];
-  drop: Command;
-  drag: Command;
-  resize: Command;
+	drop: Command<{ dragData: string }>;
+	drag: Command<{ dragData: string }>;
+
+	resize: Command;
+
+	rows: ColumnView[][];
+	columns(row: any, pin: string);
 }

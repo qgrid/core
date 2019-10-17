@@ -1,18 +1,25 @@
-import {flatView} from '../../node/node.service';
+import { Pipe } from '../pipe';
 
 export const groupPipeUnit = [
+	(_, context, next) => {
+		const { model } = context;
+		const { nodes, rows } = model.view();
+		next({ nodes, rows });
+	},
+	Pipe.pagination,
 	(memo, context, next) => {
+		const { model } = context;
 		const tag = {
 			source: context.source || 'group.pipe.unit',
 			behavior: 'core'
 		};
 
-		const model = context.model;
-		const nodes = model.view().nodes;
-		const rows = flatView(nodes);
-		model.view({rows: rows}, tag);
-		model.scene({rows: rows}, tag);
+		const { rows } = memo;
+		model.view({ rows }, tag);
+		model.scene({ rows }, tag);
 
 		next(memo);
 	}
 ];
+
+groupPipeUnit.why = 'redraw';

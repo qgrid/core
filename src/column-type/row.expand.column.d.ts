@@ -1,8 +1,7 @@
-import {ColumnView} from '../scene/view/column.view';
-import {ColumnModel} from './column.model';
+import { ColumnView } from '../scene/view/column.view';
+import { ColumnModel } from './column.model';
 
-declare class RowExpandColumnModel extends ColumnModel {
-	constructor();
+export declare class RowExpandColumnModel extends ColumnModel {
 }
 
 export declare class RowExpandColumn extends ColumnView {

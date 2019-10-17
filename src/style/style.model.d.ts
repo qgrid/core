@@ -1,11 +1,13 @@
-import {Command} from '../command/command';
+import { Command } from '../command/command';
+import { ColumnModel } from '../column-type/column.model';
+import { StyleRowContext, StyleCellContext } from './style.context';
 
 /**
  * A class that allows to apply styles to rows and cells.
- * 
- * ## Usage
- * 
- * ```javascript	
+ *
+ * ### Usage
+ *
+ * ```javascript
  *    gridModel.style({
  *        row: (row, context) => {
  *            if (row.gender === 'female') {
@@ -38,39 +40,41 @@ import {Command} from '../command/command';
  *        }
  *    });
  * ```
- * 
- * ## Suggested Links
- * 
+ *
+ * ### Suggested Links
+ *
  * * [Style View](/doc/api/style-view.html)
  * * [style.monitor.js](https://github.com/qgrid/ng2/blob/master/core/style/style.monitor.js)
  */
 
-export declare class StyleModel {
-    constructor();
+export declare interface StyleModel {
+	/**
+	 * Style row.
+	 */
+	row?: (row: any, context: StyleRowContext) => void;
 
-    /**
-     * Style row.
-     */
-    row: any;
-    
-    /**
-     * Style cell.
-     */
-    cell: any;
-    
-    /**
-     * On invalidate.
-     */
-    invalidate: Command;
+	/**
+	 * Style cell.
+	 */
+	cell?: (row: any, column: ColumnModel, context: StyleCellContext) => void | { [key: string]: (row: any, column: ColumnModel, context: any) => void };
 
-    /**
-     * Queue of row styles that can be used internally or in plugins. 
-     */
-    rows: any[];
-    
-    
-    /**
-     * Queue of cell styles that can be used internally or in plugins. 
-     */
-    cells: any[];
+	/**
+	 * On invalidate.
+	 */
+	invalidate?: Command;
+
+	/**
+	 * Queue of row styles that can be used internally or in plugins.
+	 */
+	rows?: Array<(row: any, context: any) => void>;
+
+	/**
+	 * Queue of cell styles that can be used internally or in plugins.
+	 */
+	cells?: Array<(row: any, column: ColumnModel, context: any) => void>;
+
+	/**
+	 * List of CSS classes
+	 */
+	classList?: Array<string>;
 }

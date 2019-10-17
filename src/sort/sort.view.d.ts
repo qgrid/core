@@ -1,15 +1,16 @@
-import { View } from '../view/view';
 import { Command } from '../command/command';
 import { ColumnModel } from '../column-type/column.model';
-import { IIndexResult, IMapResult } from './sort.service';
+import { Model } from '../infrastructure/model';
 
 /**
  * > Under Construction.
  */
-export declare class SortView extends View {
-    constructor(model: any);
-    hover: boolean;
-    toggle: Command;
-    direction(column: ColumnModel): IMapResult;
-    order(column: ColumnModel): IIndexResult;
+export declare class SortView {
+	constructor(model: Model);
+
+	hover: boolean;
+	toggle: Command;
+
+	direction(column: ColumnModel): { [key: string]: ColumnModel };
+	order(column: ColumnModel): number;
 }

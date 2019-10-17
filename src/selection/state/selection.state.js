@@ -1,5 +1,5 @@
-import {isArray} from '../../utility';
-import {Node} from '../../node';
+import { isArray } from '../../utility/kit';
+import { Node } from '../../node/node';
 
 export class SelectionState {
 	constructor(model, service) {
@@ -15,7 +15,7 @@ export class SelectionState {
 		}
 
 		if (item instanceof Node) {
-			const rows = this.model.data().rows;
+			const { rows } = this.model.data();
 			if (rows.length) {
 				item.rows.forEach(index => this.select(rows[index], state, key));
 				return;
@@ -23,6 +23,10 @@ export class SelectionState {
 		}
 
 		this.selectCore(item, state, key);
+	}
+
+	canSelect(item) {
+		return this.canSelectCore(item);
 	}
 
 	toggle(item) {
@@ -38,7 +42,7 @@ export class SelectionState {
 		}
 
 		if (item instanceof Node) {
-			const rows = this.model.data().rows;
+			const { rows } = this.model.data();
 			if (rows.length) {
 				const all = item.rows.length && item.rows.every(index => this.state(rows[index], key));
 				return all ? true : item.rows.some(index => this.state(rows[index], key)) ? null : false;
@@ -46,6 +50,15 @@ export class SelectionState {
 		}
 
 		return this.stateCore(item, key);
+	}
+
+	stateAll(items) {
+		const entries = this.entries();
+		if (items.length === entries.length) {
+			return true;
+		}
+
+		return entries.length > 0 ? null : false;
 	}
 
 	keyFactory() {
@@ -56,6 +69,10 @@ export class SelectionState {
 		this.clearCore();
 	}
 
+	entries() {
+		return [];
+	}
+
 	selectCore() {
 	}
 
@@ -64,5 +81,9 @@ export class SelectionState {
 
 	stateCore() {
 		return false;
+	}
+
+	canSelectCore() {
+		return true;
 	}
 }

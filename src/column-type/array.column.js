@@ -1,8 +1,9 @@
-import {ColumnView} from '../scene/view';
-import {DataColumnModel} from './data.column.model';
-import {TemplatePath} from '../template';
-import {get as getValue} from '../services/value';
-import {isArray, identity} from '../utility';
+import { ColumnView } from '../scene/view/column.view';
+import { DataColumnModel } from './data.column.model';
+import { TemplatePath } from '../template/template.path';
+import { get as getValue } from '../services/value';
+import { isArray } from '../utility/kit';
+import { FormatService } from '../format/format.service';
 
 TemplatePath.register('array-cell', (template, column) => {
 	return {
@@ -22,11 +23,30 @@ export class ArrayColumnModel extends DataColumnModel {
 	constructor() {
 		super('array');
 
-		this.itemLabel = identity;
+		this.itemType = 'text';
+		this.itemFormat = '';
+
 		this.label = function (row) {
 			const value = getValue(row, this);
-			const itemLabel = this.itemLabel.bind(this);
-			return isArray(value) ? value.map(itemLabel).join(', ') : value;
+			if (isArray(value)) {
+				let formatter;
+				switch (this.itemType) {
+					case 'number':
+						formatter = FormatService.number;
+						break;
+					case 'date':
+						formatter = FormatService.date;
+						break;
+					default:
+						formatter = this.itemLabel.bind(this);
+						break;
+				}
+
+				const format = this.itemFormat;
+				return value.map(item => formatter(item, format)).join(', ');
+			}
+
+			return value;
 		};
 	}
 }

@@ -1,6 +1,4 @@
-import {GRID_PREFIX} from '../definition';
-
-let transfer = null;
+import { GRID_PREFIX } from '../definition';
 
 export class DragService {
 	constructor() {
@@ -8,14 +6,6 @@ export class DragService {
 
 	static get mimeType() {
 		return `application/x-${GRID_PREFIX}+json`;
-	}
-
-	static get transfer() {
-		return transfer;
-	}
-
-	static set transfer(value) {
-		transfer = value;
 	}
 
 	static decode(source) {
@@ -26,3 +16,8 @@ export class DragService {
 		return JSON.stringify(source);
 	}
 }
+
+DragService.element = null;
+DragService.data = null;
+DragService.area = null;
+DragService.startPosition = null;

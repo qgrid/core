@@ -1,24 +1,30 @@
-import {DataRow} from './data.row';
-import {sumBy} from '../../utility';
+import { AppError } from '../../infrastructure/error';
+import { sumBy } from '../../utility/kit';
+import { columnFactory } from '../../column/column.factory';
 
-export class DetailsRow extends DataRow {
-	constructor(model) {
-		super(model);
-	}
+export class DetailsRow {
+	constructor(model, dataRow) {
+		const createColumn = columnFactory(model);
+		const emptyColumn = createColumn('pad', { key: 'row-details-pad' });
 
-	colspan(rowDetails, column) {
-		return sumBy(this.columnList(column.model.pin), c => c.colspan);
-	}
+		this.columns = dataRow.getColumns;
+		this.rowspan = dataRow.rowspan;
 
-	columns(rowDetails, pin) {
-		if (rowDetails.column.model.pin === pin) {
-			return [rowDetails.column];
-		}
+		this.colspan = (rowDetails, column) => {
+			return sumBy(dataRow.columnList(column.model.pin), c => c.colspan);
+		};
 
-		return this.columnList(pin);
-	}
+		this.columns = (rowDetails, pin) => {
+			if (rowDetails.column.model.pin === pin) {
+				return [rowDetails.column];
+			}
 
-	getValue() {
-		return null;
+			return [emptyColumn];
+		};
+
+		this.getValue = () => null;
+		this.getLabel = () => null;
+		this.setValue = () => null;
+		this.setLabel = () => null;
 	}
 }

@@ -1,12 +1,12 @@
-import {Resource} from '../resource/resource';
+import { Resource } from '../resource/resource';
 
 /**
  * A class representing the q-grid job state.
- * 
- * ## Usage
- * 
+ *
+ * ### Usage
+ *
  * In general this model is not modified directly, consider to [grid service](`/doc/api/grid-service.html`).
- * 
+ *
  * ```javascript
  * 	const gridModel = qgrid.model();
  *	const service = qgrid.service(gridModel);
@@ -18,17 +18,14 @@ import {Resource} from '../resource/resource';
  *	});
  * ```
  */
-export declare class ProgressModel {
-	constructor();
-	resource: Resource;
-
+export declare interface ProgressModel {
 	/**
 	 * Indicates if there a running job or not.
 	 */
-	isBusy: boolean;
+	isBusy?: boolean;
 
 	/**
 	 * List of progress jobs.
 	 */
-	queue: string[];
+	queue?: string[];
 }

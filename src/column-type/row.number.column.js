@@ -1,6 +1,6 @@
-import {ColumnView} from '../scene/view';
-import {ColumnModel} from './column.model';
-import {TemplatePath} from '../template';
+import { ColumnView } from '../scene/view/column.view';
+import { ColumnModel } from './column.model';
+import { TemplatePath } from '../template/template.path';
 
 TemplatePath.register('row-number-cell', (template, column) => {
 	return {
@@ -17,10 +17,12 @@ export class RowNumberColumnModel extends ColumnModel {
 		this.key = '$row.number';
 		this.title = 'No.';
 		this.canEdit = false;
-		this.canResize = false;
+		this.canResize = true;
 		this.canFocus = false;
 		this.canMove = false;
 		this.canHighlight = false;
+		this.canSort = false;
+		this.canFilter = false;
 		this.class = 'control';
 	}
 }

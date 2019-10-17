@@ -1,4 +1,5 @@
 import * as Match from './match';
+import { modelFactory } from '../test/model.factory';
 
 describe('Match', () => {
 
@@ -19,26 +20,19 @@ describe('Match', () => {
 		},
 	};
 
-	let model = {
-		filter: () => {
-			return {
-				by: test,
-				assertFactory: () => ({
-					equals: (x, y) => x === y,
-					lessThan: (x, y) => x < y,
-					isNull: x => x === '' || x === null || x === undefined || isNaN(x) || isFinite(x)
-				})
-			};
-		},
-		data: () => {
-			return {
-				columns: columns
-			}
-		}
-	};
+	let model = modelFactory();
+	model.filter({
+		by: test,
+		assertFactory: () => ({
+			equals: (x, y) => x === y,
+			lessThan: (x, y) => x < y,
+			isNull: x => x === '' || x === null || x === undefined || isNaN(x) || isFinite(x)
+		})
+	});
+	model.data({ columns });
 
 	let context = {
-		model: model,
+		model,
 		valueFactory: value => value => value,
 		labelFactory: value => value => value,
 	};

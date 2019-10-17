@@ -1,28 +1,24 @@
-import {Cell} from '../cell';
-import {CellView} from '../../scene/view';
-import {AppError} from '../../infrastructure';
+import { Cell } from '../cell';
+import { Td } from '../td';
+import { AppError } from '../../infrastructure/error';
+import { FakeElement } from '../fake/element';
 
-class VirtualCellView {
+class VirtualTd {
 	constructor(selector) {
 		this.selector = selector;
-
-		this.rowIndex = 0;
-		this.columnIndex = 0;
-		this.row = null;
-		this.column = null;
 	}
 
 	get model() {
-		const model = this.selector();
-		if (!model) {
+		const td = this.selector();
+		if (!td) {
 			throw new AppError('cell', 'Model is not found');
 		}
 
-		return model;
+		return td;
 	}
 
-	mode(...args) {
-		return this.model.mode(...args);
+	mode(value) {
+		return this.model.mode(value);
 	}
 
 	get value() {
@@ -32,6 +28,18 @@ class VirtualCellView {
 	set value(value) {
 		this.model.value = value;
 	}
+
+	get label() {
+		return this.model.label;
+	}
+
+	set label(value) {
+		this.model.label = value;
+	}
+
+	get element() {
+		return this.model.element || new FakeElement();
+	}
 }
 
 export class VirtualCell extends Cell {
@@ -40,7 +48,7 @@ export class VirtualCell extends Cell {
 
 		this.box = box;
 
-		const mapper = box.context.mapper;
+		const { mapper } = box.context;
 		this.dataRowIndex = mapper.viewToRow(rowIndex);
 		this.dataColumnIndex = mapper.viewToColumn(columnIndex);
 	}
@@ -51,20 +59,21 @@ export class VirtualCell extends Cell {
 
 		if (rowIndex >= 0 && columnIndex >= 0) {
 			const gridModel = this.box.model;
-			const rows = gridModel.data().rows;
-			const columns = gridModel.view().columns;
+			const { rows } = gridModel.data();
+			const { columns } = gridModel.view();
 
 			if (rows.length > rowIndex && columns.length > columnIndex) {
 				const selector = () => this.box.cell(rowIndex, columnIndex).modelCore();
-				const viewModel = new VirtualCellView(selector);
-				viewModel.rowIndex = rowIndex;
-				viewModel.columnIndex = columnIndex;
-				viewModel.row = rows[rowIndex];
-				viewModel.column = columns[columnIndex];
-				return new CellView(viewModel);
+				const vtd = new VirtualTd(selector);
+				vtd.rowIndex = rowIndex;
+				vtd.columnIndex = columnIndex;
+				vtd.row = rows[rowIndex];
+				vtd.column = columns[columnIndex];
+
+				return new Td(vtd);
 			}
 		}
-	
+
 		return null;
 	}
 

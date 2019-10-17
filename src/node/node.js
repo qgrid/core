@@ -5,6 +5,9 @@ export class Node {
 		this.rows = [];
 		this.children = [];
 		this.type = type;
+		this.source = null;
+		this.value = null;
+		
 		this.state = {
 			expand: false
 		};

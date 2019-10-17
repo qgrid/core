@@ -1,5 +1,5 @@
-declare function flattenObject(obj: object, separator: string): object;
+declare function flatView(graph: { [key: string]: any }, separator: string): { [key: string]: any };
 
 export {
-	flattenObject
+	flatView
 };

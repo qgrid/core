@@ -1,23 +1,15 @@
-import {FakeClassList} from './class.list';
-
-export interface IRect {
-	left: number;
-	right: number;
-	top: number;
-	bottom: number;
-	width: number;
-	height: number;
-}
+import { FakeClassList } from './class.list';
+import { Rect } from '../rect';
 
 export declare class FakeElement {
 	constructor();
 
 	classList: FakeClassList;
 
-	getBoundingClientRect(): IRect;
-
 	readonly clientWidth: number;
 	readonly clientHeight: number;
 	readonly offsetWidth: number;
 	readonly offsetHeight: number;
+
+	getBoundingClientRect(): Rect;
 }

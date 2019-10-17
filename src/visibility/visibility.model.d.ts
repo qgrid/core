@@ -1,53 +1,53 @@
-import {Resource} from '../resource/resource';
+import { Resource } from '../resource/resource';
 
 /**
- * A class to control visibility q-grid areas visibility .
+ * A class to control visibility of the q-grid areas.
  */
-export declare class VisibilityModel {
-	constructor();
-
-	resource: Resource;
-
+export declare interface VisibilityModel {
 	/**
-	 * Indicates if the q-grid head is visible. 
+	 * Indicates if the q-grid `head` is visible.
 	 */
-	head: boolean;
+	head?: boolean;
 
 	/**
-	 * Indicates if the q-grid foot is visible. 
+	 * Indicates if the q-grid `foot` is visible.
 	 */
-	foot: boolean;
+	foot?: boolean;
 
 	/**
-	 * Indicates if the q-grid body is visible. 
+	 * Indicates if the q-grid `body` is visible.
 	 */
-	body: boolean;
+	body?: boolean;
 
 	/**
-	 * Controls if the q-grid toolbar panels are visible. 
-	 * 
+	 * Object that controls if the q-grid `toolbar` panels are visible.
+	 *
 	 * * `'top'` show/hide top toolbar.
 	 * * `'right'` show/hide right toolbar.
 	 * * `'bottom'` show/hide bottom toolbar.
 	 * * `'left'` show/hide left toolbar.
 	 */
-	toolbar: {
-		top: boolean,
-		right: boolean,
-		bottom: boolean,
-		left: boolean,
-	};
-	
-	/**
-	 * Controls the q-grid frozen panels visibility.
-     *
-	 * * `'right'` show/hide right pin panel.
-	 * * `'left'` show/hide left pin panel.
-	 */
-	pin: {
-		left: boolean,
-		right: boolean
+	toolbar?: {
+		top: boolean;
+		right: boolean;
+		bottom: boolean;
+		left: boolean;
 	};
 
-	plugin: object;
+	/**
+	 * Object that controls if the q-grid `frozen` panels are visible.
+	 *
+	 * * `'right'` show/hide right pin panel.
+	 * * `'left'` show/hide left pin panel.
+	 * * `'top'` show/hide top floating rows.
+	 * * `'bottom'` show/hide bottom floating rows.
+	 */
+	pin?: {
+		left: boolean;
+		right: boolean;
+		top: boolean;
+		bottom: boolean;
+	};
+
+	plugin?: { [key: string]: boolean };
 }

@@ -1,6 +1,6 @@
-import {ColumnView} from '../scene/view';
-import {ColumnModel} from './column.model';
-import {TemplatePath} from '../template';
+import { ColumnView } from '../scene/view/column.view';
+import { ColumnModel } from './column.model';
+import { TemplatePath } from '../template/template.path';
 
 TemplatePath.register('row-details-cell', (template, column) => {
 	return {
@@ -9,7 +9,7 @@ TemplatePath.register('row-details-cell', (template, column) => {
 	};
 });
 
-class RowDetailsColumnModel extends ColumnModel {
+export class RowDetailsColumnModel extends ColumnModel {
 	constructor() {
 		super('row-details');
 
@@ -18,9 +18,10 @@ class RowDetailsColumnModel extends ColumnModel {
 
 		this.canEdit = false;
 		this.canResize = false;
-        this.canHighlight = false;
-        this.canFilter = false;
-        this.canSort = false;
+		this.canHighlight = false;
+		this.canFilter = false;
+		this.canSort = false;
+		this.canMove = false;
 	}
 }
 

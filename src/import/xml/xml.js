@@ -1,4 +1,4 @@
-import {isArray} from '../../utility';
+import { isArray } from '../../utility/kit';
 
 const NODE_TYPE = {
 	ELEMENT: 1,

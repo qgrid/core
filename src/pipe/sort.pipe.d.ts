@@ -1,6 +1,6 @@
-import {IPipe} from './pipe.item';
+import { PipeContext, PipeMemo } from './pipe.item';
 
 /**
- * > Under Construction.
+ * Applies client side sorting, supports sorting by multiple columns.
  */
-export declare const sortPipe: IPipe<any>;
+export declare const sortPipe: (rows: any[], context: PipeContext, next: (param: PipeMemo) => void) => any;

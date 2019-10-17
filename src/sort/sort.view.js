@@ -1,19 +1,18 @@
-import {View} from '../view';
-import {AppError} from '../infrastructure';
-import {Command} from '../command';
+import { AppError } from '../infrastructure/error';
+import { Command } from '../command/command';
 import * as columnService from '../column/column.service';
 import * as sortService from '../sort/sort.service';
 
-export class SortView extends View {
+export class SortView {
 	constructor(model) {
-		super(model);
+		this.model = model;
 
 		this.hover = false;
 		this.toggle = new Command({
 			source: 'sort.view',
 			canExecute: column => {
 				const key = column.key;
-				const map = columnService.map(model.data().columns);
+				const map = columnService.map(model.columnList().line);
 				return map.hasOwnProperty(key) && map[key].canSort !== false;
 			},
 			execute: column => {
@@ -31,7 +30,7 @@ export class SortView extends View {
 							break;
 						}
 						case 'asc': {
-							const entry = {[key]: 'desc'};
+							const entry = { [key]: 'desc' };
 							by[index] = entry;
 							this.hover = false;
 							break;
@@ -47,14 +46,14 @@ export class SortView extends View {
 						by.length = 0;
 					}
 
-					const entry = {[key]: 'asc'};
+					const entry = { [key]: 'asc' };
 					by.push(entry);
 
 					const order = sortService.orderFactory(model);
 					order(by);
 				}
 
-				sort({by: by}, {source: 'sort.view'});
+				sort({ by }, { source: 'sort.view' });
 			}
 		});
 
@@ -63,29 +62,29 @@ export class SortView extends View {
 
 	onInit() {
 		const model = this.model;
-		const sort = model.sort;
+		const { sort } = model;
 
-		this.using(model.columnListChanged.watch(e => {
+		model.columnListChanged.watch(e => {
 			if (e.hasChanges('index')) {
 				const sortState = sort();
 				const order = sortService.orderFactory(model);
 				const sortBy = order(Array.from(sortState.by));
 				if (!this.equals(sortBy, sortState.by)) {
-					sort({by: sortBy}, {source: 'sort.view'});
+					sort({ by: sortBy }, { source: 'sort.view' });
 				}
 			}
-		}));
+		});
 
-		this.using(model.dataChanged.watch(e => {
+		model.dataChanged.watch(e => {
 			if (e.hasChanges('columns')) {
-				const sortState = sort();
+				const { by } = sort();
 				const columnMap = columnService.map(e.state.columns);
-				const sortBy = sortState.by.filter(entry => columnMap.hasOwnProperty(sortService.key(entry)));
-				if (!this.equals(sortBy, sortState.by)) {
-					sort({by: sortBy}, {source: 'sort.view'});
+				const newBy = by.filter(entry => columnMap.hasOwnProperty(sortService.key(entry)));
+				if (!this.equals(newBy, by)) {
+					sort({ by: newBy }, { source: 'sort.view' });
 				}
 			}
-		}));
+		});
 	}
 
 	equals(x, y) {
@@ -93,16 +92,14 @@ export class SortView extends View {
 	}
 
 	direction(column) {
-		const key = column.key;
-		const state = this.model.sort();
-		const by = state.by;
+		const { key } = column;
+		const { by } = this.model.sort();
 		return sortService.map(by)[key];
 	}
 
 	order(column) {
-		const key = column.key;
-		const state = this.model.sort();
-		const by = state.by;
+		const { key } = column;
+		const { by } = this.model.sort();
 		return sortService.index(by, key);
 	}
 }

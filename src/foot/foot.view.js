@@ -1,22 +1,21 @@
-import {View} from '../view';
-import {Aggregation} from '../services';
-import {Log, AppError} from '../infrastructure';
-import {getFactory as valueFactory} from '../services/value';
+import { Aggregation } from '../services/aggregation';
+import { AppError } from '../infrastructure/error';
+import { Log } from '../infrastructure/log';
+import { getFactory as valueFactory } from '../services/value';
 
-export class FootView extends View {
+export class FootView {
 	constructor(model, table) {
-		super(model);
-
+		this.model = model;
 		this.table = table;
 		this.rows = [];
 
 		this.valueFactory = valueFactory;
 
-		this.using(model.sceneChanged.watch(e => {
+		model.sceneChanged.watch(e => {
 			if (e.hasChanges('column')) {
 				this.invalidate();
 			}
-		}));
+		});
 	}
 
 	invalidate() {
@@ -32,7 +31,7 @@ export class FootView extends View {
 
 	get count() {
 		const model = this.model;
-		const columns = model.data().columns;
+		const { columns } = model.view();
 		const resourceCount = model.foot().resource.count;
 
 		for (let i = 0, length = columns.length; i < length; i++) {
@@ -55,7 +54,7 @@ export class FootView extends View {
 					`Aggregation ${aggregation} is not registered`);
 			}
 
-			const rows = this.model.data().rows;
+			const { rows } = this.model.data();
 			const getValue = this.valueFactory(column);
 
 			return Aggregation[aggregation](rows, getValue, aggregationOptions);

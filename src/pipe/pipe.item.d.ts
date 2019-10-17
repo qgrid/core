@@ -1,25 +1,17 @@
-import {Model} from '../infrastructure/model';
+import { Model } from '../infrastructure/model';
+import { Node } from '../node/node';
 
-export interface IPivot {
-	heads: any[];
+export interface PipePivot {
+	head: Node;
 	rows: any[];
 }
 
-export interface IMemo {
+export interface PipeMemo {
+	pivot: PipePivot;
 	rows: any[];
-	pivot: IPivot;
 	nodes: any[];
 }
 
-export interface IContext {
+export interface PipeContext {
 	model: Model;
-}
-
-export interface INext {
-	(param: IMemo): void;
-}
-
-
-export interface IPipe<T> {
-	(memo: T, context: IContext, next: INext): any;
 }

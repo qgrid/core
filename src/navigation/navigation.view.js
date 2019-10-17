@@ -1,136 +1,191 @@
-import {View} from '../view';
-import {Command} from '../command';
-import {Navigation} from './navigation';
-import {GRID_PREFIX} from '../definition';
-import {CellView} from '../scene/view';
+import { Command } from '../command/command';
+import { Navigation } from './navigation';
+import { GRID_PREFIX } from '../definition';
+import { Fastdom } from '../services/fastdom';
+import { Td } from '../dom/td';
 
-export class NavigationView extends View {
-	constructor(model, table, commandManager) {
-		super(model);
-
+export class NavigationView {
+	constructor(model, table, shortcut) {
+		this.model = model;
 		this.table = table;
 
-		const shortcut = model.action().shortcut;
 		const navigation = new Navigation(model, table);
 		let focusBlurs = [];
 
-		this.using(shortcut.register(commandManager, navigation.commands));
+		shortcut.register(navigation.commands);
 
 		this.focus = new Command({
 			source: 'navigation.view',
-			execute: cell => {
-				const cellModel = table.body.cell(cell.rowIndex, cell.columnIndex).model();
-				model.navigation({cell: cellModel});
+			execute: e => {
+				const { rowIndex, columnIndex, behavior } = e;
+				const td = table.body.cell(rowIndex, columnIndex).model();
+				if (td) {
+					const { row, column } = td;
+					model.navigation({
+						cell: {
+							rowIndex,
+							columnIndex,
+							row,
+							column
+						}
+					}, {
+							source: 'navigation.view',
+							behavior
+						});
+				} else {
+					model.navigation({
+						cell: null
+					}, {
+							source: 'navigation.view',
+							behavior
+						});
+				}
 			},
-			canExecute: cell => cell && cell.column.canFocus && !CellView.equals(cell, model.navigation().cell)
+			canExecute: newCell => {
+				const oldCell = model.navigation().cell;
+				if (newCell && newCell.column.canFocus && !Td.equals(newCell, oldCell)) {
+					return true;
+				}
+
+				return false;
+			}
 		});
 
 		this.scrollTo = new Command({
 			source: 'navigation.view',
-			execute: (row, column) => this.scroll(table.view, table.body.cell(row, column)),
+			execute: (row, column) => {
+				const cell = table.body.cell(row, column);
+				this.scroll(table.view, cell);
+			},
 			canExecute: (row, column) => table.body.cell(row, column).model() !== null
 		});
 
-		this.using(model.navigationChanged.watch(e => {
+		model.navigationChanged.watch(e => {
 			if (e.hasChanges('cell')) {
-				// We need this one to toggle focus from details to main grid
-				// or when user change navigation cell through the model
-				if (!this.table.view.isFocused()) {
-					this.table.view.focus();
+				if (e.tag.behavior !== 'core') {
+					// We need this one to toggle focus from details to main grid
+					// or when user change navigation cell through the model
+					if (!this.table.view.isFocused()) {
+						this.table.view.focus();
+					}
 				}
 
-				const navState = e.state;
-				const newRow = navState.rowIndex;
-				const newColumn = navState.columnIndex;
-
+				const { rowIndex, columnIndex } = e.state;
 				focusBlurs = this.invalidateFocus(focusBlurs);
-				if (e.tag.source !== 'navigation.scroll' && this.scrollTo.canExecute(newRow, newColumn)) {
-					this.scrollTo.execute(newRow, newColumn);
+				if (e.tag.source !== 'navigation.scroll' && this.scrollTo.canExecute(rowIndex, columnIndex)) {
+					this.scrollTo.execute(rowIndex, columnIndex);
 				}
 
 				model.focus({
-					rowIndex: newRow,
-					columnIndex: newColumn
+					rowIndex,
+					columnIndex
 				}, {
-					source: 'navigation.view'
-				});
+						source: 'navigation.view'
+					});
 			}
-		}));
+		});
 
-		this.using(model.focusChanged.watch(e => {
+		model.focusChanged.watch(e => {
 			if (e.tag.source === 'navigation.view') {
 				return;
 			}
 
-			if (e.hasChanges('rowIndex') || e.hasChanges('columnIndex')) {
-				const cell = table.body.cell(e.state.rowIndex, e.state.columnIndex).model();
-				model.navigation({cell});
+			if (e.hasChanges('isActive')) {
+				const { view } = table;
+				const activeClassName = `${GRID_PREFIX}-active`;
+				if (e.state.isActive) {
+					Fastdom.mutate(() => view.addClass(activeClassName));
+					view.focus();
+				} else {
+					Fastdom.mutate(() => view.removeClass(activeClassName));
+				}
 			}
-		}));
 
-		this.using(model.sceneChanged.watch(e => {
+			if (e.hasChanges('rowIndex') || e.hasChanges('columnIndex')) {
+				this.focus.execute(e.state);
+			}
+
+		});
+
+		model.sceneChanged.watch(e => {
 			if (e.hasChanges('status')) {
-				const status = e.state.status;
+				const { status } = e.state;
 				switch (status) {
 					case 'stop':
-						focusBlurs = this.invalidateFocus(focusBlurs);
+						const { row, column, columnIndex } = model.navigation();
+						if (row && column) {
+							const newRowIndex = table.data.rows().indexOf(row);
+							let newColumnIndex = table.data.columns().findIndex(c => c.key === column.key);
+							if (newColumnIndex < 0 && column.class === 'control') {
+								newColumnIndex = columnIndex;
+							}
+
+							this.focus.execute({
+								rowIndex: newRowIndex,
+								columnIndex: newColumnIndex,
+								behavior: 'core'
+							});
+						}
 						break;
 				}
 			}
-		}));
+		});
 	}
 
 	invalidateFocus(dispose) {
 		dispose.forEach(f => f());
 		dispose = [];
 
-		const navState = this.model.navigation();
-		const row = navState.rowIndex;
-		const column = navState.columnIndex;
-		const cell = this.table.body.cell(row, column);
+		const { rowIndex, columnIndex } = this.model.navigation();
+		const cell = this.table.body.cell(rowIndex, columnIndex);
 		if (cell.model()) {
-			cell.addClass(`${GRID_PREFIX}-focus`);
-			dispose.push(() => cell.removeClass(`${GRID_PREFIX}-focus`));
+			Fastdom.mutate(() => cell.addClass(`${GRID_PREFIX}-focused`));
+			dispose.push(() => Fastdom.mutate(() => cell.removeClass(`${GRID_PREFIX}-focused`)));
 		}
 
 		return dispose;
 	}
 
 	scroll(view, target) {
-		const tr = target.rect();
-		const vr = view.rect();
-		const scrollState = this.model.scroll();
+		const { scroll } = this.model;
+		Fastdom.measure(() => {
+			const tr = target.rect();
+			const vr = view.rect();
+			const state = {};
 
-		if (view.canScrollTo(target, 'left')) {
-			if (vr.left > tr.left
-				|| vr.left > tr.right
-				|| vr.right < tr.left
-				|| vr.right < tr.right) {
+			if (view.canScrollTo(target, 'left')) {
+				if (vr.left > tr.left
+					|| vr.left > tr.right
+					|| vr.right < tr.left
+					|| vr.right < tr.right) {
 
-				if (vr.width < tr.width || vr.left > tr.left || vr.left > tr.right) {
-					view.scrollLeft(tr.left - vr.left + scrollState.left);
+					if (vr.width < tr.width || vr.left > tr.left || vr.left > tr.right) {
+						state.left = tr.left - vr.left + scroll().left;
+					}
+					else if (vr.left < tr.left || vr.right < tr.right) {
+						state.left = tr.right - vr.right + scroll().left;
+					}
 				}
-				else if (vr.left < tr.left || vr.right < tr.right) {
-					view.scrollLeft(tr.right - vr.right + scrollState.left);
-				}
-
 			}
-		}
 
-		if (view.canScrollTo(target, 'top')) {
-			if (vr.top > tr.top
-				|| vr.top > tr.bottom
-				|| vr.bottom < tr.top
-				|| vr.bottom < tr.bottom) {
+			if (view.canScrollTo(target, 'top')) {
+				if (vr.top > tr.top
+					|| vr.top > tr.bottom
+					|| vr.bottom < tr.top
+					|| vr.bottom < tr.bottom) {
 
-				if (vr.height < tr.height || vr.top > tr.top || vr.top > tr.bottom) {
-					view.scrollTop(tr.top - vr.top + scrollState.top);
+					if (vr.height < tr.height || vr.top > tr.top || vr.top > tr.bottom) {
+						state.top = tr.top - vr.top + scroll().top;
+					}
+					else if (vr.top < tr.top || vr.bottom < tr.bottom) {
+						state.top = tr.bottom - vr.bottom + scroll().top;
+					}
 				}
-				else if (vr.top < tr.top || vr.bottom < tr.bottom) {
-					view.scrollTop(tr.bottom - vr.bottom + scrollState.top);
-				}
-
 			}
-		}
+
+			if (Object.keys(state).length) {
+				scroll(state, { behavior: 'core', source: 'navigation.view' });
+			}
+		});
 	}
 }

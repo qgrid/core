@@ -1,18 +1,18 @@
-import {Pipe} from '../pipe';
-import {Scene} from '../../scene';
+import { Pipe } from '../pipe';
+import { Scene } from '../../scene/scene';
+import { Guard } from '../../infrastructure/guard';
 
 export const columnPipeUnit = [
-	(memo, context, next) => {
-		const view = context.model.view();
-		next({
-			rows: view.rows,
-			pivot: view.pivot,
-			nodes: view.nodes
-		});
+	(_, context, next) => {
+		const { view } = context.model;
+		const { rows, pivot, nodes } = view();
+		next({ rows, pivot, nodes });
 	},
 	Pipe.column,
 	(memo, context, next) => {
-		const model = context.model;
+		Guard.hasProperty(memo, 'columns');
+
+		const { model } = context;
 		const scene = new Scene(model);
 		const columnLine = scene.columnLine(memo.columns);
 		const tag = {
@@ -21,7 +21,7 @@ export const columnPipeUnit = [
 		};
 
 		const columns = columnLine.map(c => c.model);
-		model.view({columns: columns}, tag);
+		model.view({ columns }, tag);
 
 		const column = {
 			rows: scene.columnRows(memo.columns),
@@ -29,8 +29,10 @@ export const columnPipeUnit = [
 			line: columnLine
 		};
 
-		context.model.scene({column: column}, tag);
+		context.model.scene({ column }, tag);
 
 		next(memo);
 	}
 ];
+
+columnPipeUnit.why = 'redraw';

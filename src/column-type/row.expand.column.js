@@ -1,6 +1,6 @@
-import {ColumnView} from '../scene/view';
-import {ColumnModel} from './column.model';
-import {TemplatePath} from '../template';
+import { ColumnView } from '../scene/view/column.view';
+import { ColumnModel } from './column.model';
+import { TemplatePath } from '../template/template.path';
 
 TemplatePath.register('row-expand-cell', (template, column) => {
 	return {
@@ -9,7 +9,7 @@ TemplatePath.register('row-expand-cell', (template, column) => {
 	};
 });
 
-class RowExpandColumnModel extends ColumnModel {
+export class RowExpandColumnModel extends ColumnModel {
 	constructor() {
 		super('row-expand');
 
@@ -20,6 +20,8 @@ class RowExpandColumnModel extends ColumnModel {
 		this.canResize = false;
 		this.canFilter = false;
 		this.canSort = false;
+		this.canHighlight = false;
+		this.canMove = false;
 	}
 }
 

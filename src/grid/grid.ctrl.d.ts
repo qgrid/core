@@ -1,21 +1,21 @@
-import { Model } from '../infrastructure';
-import { View } from '../view/view';
+import { Model } from '../infrastructure/model';
 import { Table } from '../dom/table';
 import { Bag } from '../dom/bag';
+import { Disposable } from '../infrastructure/disposable';
 
 export declare class GridBag {
 	head: Bag;
 	body: Bag;
-	foot: bag;
+	foot: Bag;
 }
 
-export declare class GridCtrl extends View {
-	constructor(model: Model, context: any)
-
-	keyDown(e: any, source = 'grid');
-	invalidateActive(): void;
+export declare class GridCtrl extends Disposable {
+	constructor(model: Model, context: { element: HTMLElement, layerFactory: () => any });
 
 	table: Table;
 	bag: GridBag;
-	markup: any;
+	markup: { [key: string]: HTMLElement };
+
+	keyDown(e: any, source?: string): string[];
+	invalidateActive(): void;
 }

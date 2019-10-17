@@ -1,6 +1,6 @@
-import {ColumnView} from '../scene/view';
-import {ColumnModel} from './column.model';
-import {TemplatePath} from '../template';
+import { ColumnView } from '../scene/view/column.view';
+import { ColumnModel } from './column.model';
+import { TemplatePath } from '../template/template.path';
 
 TemplatePath.register('pivot-cell', (template) => {
 	return {
@@ -21,8 +21,8 @@ export class PivotColumnModel extends ColumnModel {
 		this.canEdit = false;
 		this.canSort = false;
 		this.canResize = false;
-		this.width = 60;
-		this.rowIndex = 0;
+		this.canFilter = false;
+		this.canMove = false;
 	}
 }
 

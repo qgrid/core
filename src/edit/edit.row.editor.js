@@ -1,4 +1,4 @@
-import {cloneDeep} from '../utility';
+import {cloneDeep} from '../utility/kit';
 import {CellEditor} from './edit.cell.editor';
 import {get as getValue, set as setValue} from '../services/value';
 import {get as getLabel, set as setLabel} from '../services/label';
@@ -17,7 +17,7 @@ class RowEditorCore {
 }
 
 
-class CellView {
+class TdView {
 	constructor(row, column) {
 		this.row = row;
 		this.column = column;
@@ -51,7 +51,7 @@ export class RowEditor extends RowEditorCore {
 		this.editors =
 			columns
 				.filter(column => column.canEdit)
-				.map(column => new CellEditor(new CellView(this.value, column)));
+				.map(column => new CellEditor(new TdView(this.value, column)));
 	}
 
 	commit() {

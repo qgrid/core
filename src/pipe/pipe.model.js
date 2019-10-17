@@ -1,12 +1,10 @@
-import {PipeUnit as PU} from '../pipe/pipe.unit';
-import {uniq} from '../utility';
-
+import { PipeUnit as PU } from '../pipe/pipe.unit';
+import { uniq } from '../utility/kit';
 
 export class PipeModel {
 	constructor() {
 		this.reduce = (units, model) => {
 			const dataPipe = model.data().pipe;
-			
 			// Change one of default pipes to data pipes - cause default literaly means data
 			// we can change only one because all other will be moved out during reduce
 			const index = units.indexOf(PU.default);
@@ -59,14 +57,14 @@ export class PipeModel {
 				'size': PU.default
 			},
 			'fetch': {
-				'skip': PU.default,
-				'round': PU.default
+				'skip': PU.default
 			},
 			'sort': {
 				'by': PU.default
 			},
 			'filter': {
 				'by': PU.default,
+				'match': PU.default,
 				'unit': PU.column
 			},
 			'group': {
@@ -76,18 +74,22 @@ export class PipeModel {
 				'by': PU.default
 			},
 			'columnList': {
-				'index': PU.column
+				'index': PU.columnIndex
 			},
 			'row': {
 				'status': PU.rowDetails,
-                'unit': PU.rowDetails,
-                'canDrag': PU.column,
-                'canResize': PU.column
+				'unit': PU.rowDetails,
+				'canMove': PU.column,
+				'canResize': PU.column
 			},
-			'selection': {
-				'mode': PU.column,
-				'unit': PU.column
+			'rowList': {
+				'index': PU.row
+			},
+			'animation': {
+				'rows': PU.default
 			}
 		};
+
+		this.effect = {};
 	}
 }

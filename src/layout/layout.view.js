@@ -1,15 +1,27 @@
-import { View } from '../view';
 import * as css from '../services/css';
 import * as columnService from '../column/column.service';
-import { clone } from '../utility';
-import { Log, Composite } from '../infrastructure';
+import { Log } from '../infrastructure/log';
+import { Disposable } from '../infrastructure/disposable';
 
-export class LayoutView extends View {
+export class LayoutView extends Disposable {
 	constructor(model, table, service) {
-		super(model);
+		super();
+
 		this.model = model;
 		this.table = table;
 		this.service = service;
+
+		model.navigationChanged.watch(e => {
+			if (e.hasChanges('cell')) {
+				const oldColumn = e.changes.cell.oldValue ? e.changes.cell.oldValue.column : {};
+				const newColumn = e.changes.cell.newValue ? e.changes.cell.newValue.column : {};
+
+				if (oldColumn.key !== newColumn.key && (oldColumn.viewWidth || newColumn.viewWidth)) {
+					const form = this.updateColumnForm();
+					this.invalidateColumns(form);
+				}
+			}
+		});
 
 		this.onInit();
 	}
@@ -17,16 +29,14 @@ export class LayoutView extends View {
 	onInit() {
 		const model = this.model;
 
-		model.sceneChanged.watch(e => {
-			if (e.hasChanges('column')) {
-				this.invalidateColumns();
-			}
-		});
-
 		const styleRow = this.styleRow.bind(this);
 		model.layoutChanged.watch(e => {
+			if (e.tag.source === 'layout.view') {
+				return;
+			}
+
 			if (e.hasChanges('columns')) {
-				const form = this.getColumnForm();
+				const form = this.updateColumnForm();
 				this.invalidateColumns(form);
 			}
 		});
@@ -41,48 +51,85 @@ export class LayoutView extends View {
 					const index = model.style.rows.indexOf(styleRow);
 					rows.splice(index, 1);
 				}
-				model.style({ rows });
+				model.style({ rows }, { source: 'layout.view' });
+			}
+		});
+
+		model.dataChanged.watch(e => {
+			if (e.hasChanges('columns')) {
+				model.layout({
+					columns: new Map()
+				}, {
+						source: 'layout.view',
+						behavior: 'core'
+					});
+			}
+		});
+
+		model.sceneChanged.watch(e => {
+			if (e.hasChanges('status')) {
+				if (e.state.status === 'stop') {
+					this.updateColumnForm();
+				}
+			}
+
+			if (e.hasChanges('column')) {
+				const { columns } = this.model.layout();
+				this.invalidateColumns(columns);
 			}
 		});
 	}
 
-	getRowForm() {
-		const model = this.model;
-		const layout = model.layout;
-		return clone(layout().rows);
-	}
+	updateColumnForm() {
+		const { model, table } = this;
+		const { head } = table;
+		const { cells } = head.context.bag;
+		const layout = model.layout().columns;
 
-	getColumnForm() {
-		const model = this.model;
-		const layout = model.layout;
-		const state = clone(layout().columns);
-		const headRow = this.table.head.row(0);
-		if (headRow) {
-			const columns = this.table.data.columns();
-			let length = columns.length;
-			while (length--) {
-				const column = columns[length];
-				if (!state.has(column.key)) {
-					if (column.canResize) {
-						const index = columns.findIndex(c => c === column);
-						state.set(column.key, { width: headRow.cell(index).width() });
-					}
+		const form = new Map();
+		for (let cell of cells) {
+			const { column, rowIndex, columnIndex } = cell;
+			if (!column.canResize) {
+				continue;
+			}
+
+			const { key } = column;
+			if (layout.has(key)) {
+				form.set(key, { width: layout.get(key).width });
+			} else {
+				const th = head.cell(rowIndex, columnIndex);
+				const width = th.width();
+
+				// It can be that clientWidth is zero on start, while css is not applied.
+				if (width) {
+					form.set(key, { width });
 				}
 			}
 		}
 
-		return state;
+		model.layout({ columns: form }, { source: 'layout.view', behavior: 'core' });
+
+		const { column } = model.navigation();
+		if (column && column.viewWidth) {
+			const viewForm = new Map(form)
+			const columnForm = form.get(column.key);
+			viewForm.set(column.key, { width: columnForm ? Math.max(columnForm.width, column.viewWidth) : column.viewWidth });
+			return viewForm;
+		}
+
+		return form;
 	}
 
 	invalidateColumns(form) {
 		Log.info('layout', 'invalidate columns');
 
-		const table = this.table;
-		const getWidth = columnService.widthFactory(table, form);
+		const { table } = this;
 		const columns = table.data.columns();
-		const style = {};
+		const getWidth = columnService.widthFactory(table, form);
 
-		let length = columns.length;
+		const style = {};
+		let { length } = columns;
+
 		while (length--) {
 			const column = columns[length];
 			const width = getWidth(column.key);
@@ -95,8 +142,8 @@ export class LayoutView extends View {
 					'max-width': size
 				};
 
-				style[`td.q-grid-${key}`] = sizeStyle;
-				style[`th.q-grid-${key}`] = sizeStyle;
+				style[`td.q-grid-the-${key}`] = sizeStyle;
+				style[`th.q-grid-the-${key}`] = sizeStyle;
 			}
 		}
 
@@ -105,7 +152,9 @@ export class LayoutView extends View {
 	}
 
 	styleRow(row, context) {
-		const form = this.getRowForm();
+		const model = this.model;
+		const layout = model.layout;
+		const form = layout().rows;
 		const style = form.get(row);
 		if (style) {
 			context.class(`resized-${style.height}px`, { height: style.height + 'px' });
@@ -115,8 +164,8 @@ export class LayoutView extends View {
 	dispose() {
 		super.dispose();
 
-		const columnSheet = css.sheet(this.gridId, 'layout-column');
-		columnSheet.remove();
+		const sheet = css.sheet(this.gridId, 'layout-column');
+		sheet.remove();
 	}
 
 	get gridId() {

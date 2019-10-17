@@ -1,6 +1,6 @@
-import {Unit} from './unit';
-import {FakeElement} from './fake/element';
-import * as css from '../services/css';
+import { Unit } from './unit';
+import { FakeElement } from './fake/element';
+import { escapeAttr } from '../services/css';
 
 function isParentOf(parent, element) {
 	while (element) {
@@ -25,7 +25,7 @@ export class View extends Unit {
 	}
 
 	columns() {
-		const column = this.model.scene().column;
+		const { column } = this.model.scene();
 		return column.line;
 	}
 
@@ -45,7 +45,7 @@ export class View extends Unit {
 	}
 
 	isFocused() {
-		return this.getElementsCore('body')
+		return this.getElementsCore('view')
 			.some(element => this.isFocusedCore(element));
 	}
 
@@ -72,15 +72,19 @@ export class View extends Unit {
 		return false;
 	}
 
+	hasLayer(name) {
+		return this.layers.has(name);
+	}
+
 	addClass(name) {
 		if (this.markup.view) {
-			this.markup.view.classList.add(css.escapeAttr(name));
+			this.markup.view.classList.add(escapeAttr(name));
 		}
 	}
 
 	removeClass(name) {
 		if (this.markup.view) {
-			this.markup.view.classList.remove(css.escapeAttr(name));
+			this.markup.view.classList.remove(escapeAttr(name));
 		}
 	}
 
@@ -98,6 +102,16 @@ export class View extends Unit {
 			if (markup.body) {
 				markup.body.scrollLeft = value;
 			}
+
+			if (markup['body-top']) {
+				markup['body-top'].scrollLeft = value;
+			}
+
+			if (markup['body-bottom']) {
+				markup['body-bottom'].scrollLeft = value;
+			}
+
+			return;
 		}
 
 		return this.getElement().scrollLeft;
@@ -107,9 +121,19 @@ export class View extends Unit {
 		if (arguments.length) {
 			this.getElementsCore('body')
 				.forEach(element => element.scrollTop = value);
+
+			return;
 		}
 
 		return this.getElement().scrollTop;
+	}
+
+	scrollHeight() {
+		return this.getElement().scrollHeight;
+	}
+
+	scrollWidth() {
+		return this.getElement().scrollWidth;
 	}
 
 	canScrollTo(target, direction) {
@@ -136,7 +160,41 @@ export class View extends Unit {
 	rect(area = 'body') {
 		const markup = this.markup;
 		const element = markup[area];
-		return element ? element.getBoundingClientRect() : super.rect();
+		if (element) {
+			// TODO: get rid of that
+			const rect = element.getBoundingClientRect();
+
+			// Get rect without scrolls
+			const width = element.clientWidth;
+			const height = element.clientHeight;
+			const left = rect.left;
+			const top = rect.top;
+			const right = left + width;
+			const bottom = top + height;
+			return { left, top, right, bottom, width, height };
+		}
+
+		return super.rect();
+	}
+
+	height(area = 'body') {
+		const markup = this.markup;
+		const element = markup[area];
+		if (element) {
+			return element.clientHeight;
+		}
+
+		return 0;
+	}
+
+	width(area = 'body') {
+		const markup = this.markup;
+		const element = markup[area];
+		if (element) {
+			return element.clientWidth;
+		}
+
+		return 0;
 	}
 
 	getElementCore() {
@@ -145,7 +203,7 @@ export class View extends Unit {
 
 	isFocusedCore(target) {
 		const markup = this.markup;
-		let current = markup.document.activeElement;
+		const current = markup.document.activeElement;
 		return isParentOf(target, current);
 	}
 
