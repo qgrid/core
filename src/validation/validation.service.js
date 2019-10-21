@@ -1,4 +1,6 @@
-import LIVR from 'livr';
+import * as LIVR from 'livr';
+
+export const { Validator } = LIVR;
 
 function toLIVR(rules, key) {
 	const validationRules = [];
@@ -15,7 +17,7 @@ function toLIVR(rules, key) {
 	});
 	return {
 		hasRules: validationRules.length > 0,
-		rules: {[key]: validationRules}
+		rules: { [key]: validationRules }
 	};
 }
 
@@ -24,6 +26,10 @@ export function hasRules(rules, key) {
 }
 
 export function createValidator(rules, key) {
-	const settings = toLIVR(rules, key);
-	return new LIVR.Validator(settings.rules);
+	if (arguments.length === 2) {
+		const settings = toLIVR(rules, key);
+		return new Validator(settings.rules);
+	}
+
+	return new Validator(rules);
 }

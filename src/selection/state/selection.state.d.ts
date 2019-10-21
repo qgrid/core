@@ -1,19 +1,16 @@
-import {Model} from "../../infrastructure/model";
-import {IHashFactoryResult, SelectionService} from "../selection.service";
-
-export declare type NodeOrArrayOfNode = Node | Node[];
-
-export interface IToggleResult{
-	(item: NodeOrArrayOfNode, state: boolean, key: string): void;
-}
+import { Model } from '../../infrastructure/model';
+import { SelectionService } from '../selection.service';
 
 export declare class SelectionState {
 	constructor(model: Model, service: SelectionService);
+
 	model: Model;
 	service: SelectionService;
-	select(item: NodeOrArrayOfNode, state: boolean, key: string): void;
-	toggle(item: NodeOrArrayOfNode): IToggleResult;
-	state(item: NodeOrArrayOfNode, key: string): boolean;
-	keyFactory(): IHashFactoryResult;
+
+	select(item: any | any[], state: boolean, key: string): void;
+	canSelect(item: any | any[], state: boolean, key: string): void;
+	toggle(item: any | any[]): (item: any | any[], state: boolean, key: string) => void;
+	state(item: any | any[], key: string): boolean;
+	keyFactory(): (key: string) => any;
 	clear(): void;
 }

@@ -1,6 +1,4 @@
-import {Resource} from '../resource/resource';
+import { Resource } from '../resource/resource';
 
-export declare class ExportModel {
-	constructor();
-	resource: Resource;
+export declare interface ExportModel {
 }

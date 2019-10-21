@@ -1,6 +1,6 @@
-import {ColumnView} from '../scene/view';
-import {ColumnModel} from './column.model';
-import {TemplatePath} from '../template';
+import { ColumnView } from '../scene/view/column.view';
+import { ColumnModel } from './column.model';
+import { TemplatePath } from '../template/template.path';
 
 TemplatePath.register('pad-cell', (template) => {
 	return {
@@ -22,6 +22,8 @@ export class PadColumnModel extends ColumnModel {
 		this.canResize = false;
 		this.canHighlight = false;
 		this.canFocus = false;
+		this.canMove = false;
+		this.canFilter = false;		
 		this.source = 'generation';
 	}
 }

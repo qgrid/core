@@ -1,27 +1,38 @@
-import { PathService } from '../path';
-import { View } from '../view/view';
+import { PathService } from '../path/path.service';
+import { Fastdom } from '../services/fastdom';
+import { GRID_PREFIX } from '../definition';
+import { jobLine } from '../services/job.line';
+import { eventPath } from '../services/dom';
+import { LEFT_BUTTON, checkButtonCode } from '../mouse/mouse.code';
 
-export class BodyCtrl extends View {
-	constructor(model, view, bag) {
-		super(model);
+const VERTICAL_SCROLL_CLASS = `${GRID_PREFIX}-scroll-vertical`;
+const HORIZONTAL_SCROLL_CLASS = `${GRID_PREFIX}-scroll-horizontal`;
+const DEFAULT_DELTA_Y = 100;
 
+export class BodyCtrl {
+	constructor(model, view, table, bag) {
+		this.model = model;
 		this.view = view;
 		this.bag = bag;
-		this.rangeStartCell = null;		
+		this.table = table;
+		this.rangeStartCell = null;
+		this.scrollingJob = jobLine(100);
 	}
 
 	onScroll(e) {
-		const scroll = this.model.scroll;
+		const { scroll } = this.model;
 
 		const oldValue = scroll();
 		const newValue = {};
 		let hasChanges = false;
 		if (oldValue.top !== e.scrollTop) {
+			this.table.view.addClass(VERTICAL_SCROLL_CLASS);
 			newValue.top = e.scrollTop;
 			hasChanges = true;
 		}
 
 		if (oldValue.left !== e.scrollLeft) {
+			this.table.view.addClass(HORIZONTAL_SCROLL_CLASS);
 			newValue.left = e.scrollLeft;
 			hasChanges = true;
 		}
@@ -32,45 +43,47 @@ export class BodyCtrl extends View {
 				behavior: 'core'
 			});
 		}
+
+		this.scrollingJob(this.onScrollEnd.bind(this));
+	}
+
+	onScrollEnd() {
+		this.table.view.removeClass(VERTICAL_SCROLL_CLASS);
+		this.table.view.removeClass(HORIZONTAL_SCROLL_CLASS);
 	}
 
 	onWheel(e) {
-		const model = this.model;
-		if (model.edit().state === 'view') {
-			const scroll = model.scroll;
-			const upper = 0;
-			const lower = e.scrollHeight - e.offsetHeight;
-			const top = Math.min(lower, Math.max(upper, scroll().top + e.deltaY));
-
-			scroll({ top }, { source: 'body.core' });
+		if (e.shiftKey) {
+			return;
 		}
-	}
 
-	onClick(e) {
-		const pathFinder = new PathService(this.bag.body);
-		const cell = pathFinder.cell(e.path);
-		if (cell) {
-			this.select(cell);
-			this.navigate(cell);
-			if (cell.column.editorOptions.trigger === 'click' && this.view.edit.cell.enter.canExecute(cell)) {
-				this.view.edit.cell.enter.execute(cell);
-			}
+		const { model, table } = this;
+		if (model.edit().state === 'view') {
+			const { scroll } = model;
+			const upper = 0;
+
+			Fastdom.measure(() => {
+				const lower = table.view.scrollHeight() - table.view.height();
+				const deltaY = DEFAULT_DELTA_Y * Math.sign(e.deltaY);
+				const top = Math.min(lower, Math.max(upper, scroll().top + deltaY));
+
+				scroll({ top }, { source: 'body.core' });
+			});
 		}
 	}
 
 	onMouseDown(e) {
-		const selectionState = this.selection;
-		if (selectionState.area !== 'body') {
-			return;
-		}
+		if (checkButtonCode(e, LEFT_BUTTON)) {
+			const { area, mode } = this.selection;
+			if (area !== 'body') {
+				return;
+			}
 
-		const pathFinder = new PathService(this.bag.body);
-		const cell = pathFinder.cell(e.path);
-
-		const editMode = this.model.edit().mode;
-		if (selectionState.mode === 'range') {
-			if (!editMode) {
+			const pathFinder = new PathService(this.bag.body);
+			const cell = pathFinder.cell(eventPath(e));
+			if (mode === 'range') {
 				this.rangeStartCell = cell;
+
 				if (this.rangeStartCell) {
 					this.view.selection.selectRange(this.rangeStartCell, null, 'body');
 				}
@@ -80,24 +93,42 @@ export class BodyCtrl extends View {
 
 	onMouseMove(e) {
 		const pathFinder = new PathService(this.bag.body);
-		const row = pathFinder.row(e.path);
-		if (row) {
-			const index = row.index;
-			const highlightRow = this.view.highlight.row;
-			if (highlightRow.canExecute(index)) {
-				this.model
-					.highlight()
-					.rows
-					.filter(i => i !== index)
-					.forEach(i => highlightRow.execute(i, false));
+		const td = pathFinder.cell(eventPath(e));
 
-				highlightRow.execute(index, true);
+		if (td) {
+			const { highlight } = this.view;
+			const { rows, cell } = this.model.highlight();
+
+			if (cell) {
+				highlight.cell.execute(cell, false);
+			}
+
+			const newCell = {
+				rowIndex: td.rowIndex,
+				columnIndex: td.columnIndex
+			};
+
+			if (highlight.cell.canExecute(newCell)) {
+				highlight.cell.execute(newCell, true)
+			}
+
+			const tr = pathFinder.row(eventPath(e));
+			if (tr) {
+				const { index } = tr;
+
+				if (highlight.row.canExecute(index)) {
+					rows
+						.filter(i => i !== index)
+						.forEach(i => highlight.row.execute(i, false));
+
+					highlight.row.execute(index, true);
+				}
 			}
 		}
 
 		if (this.selection.mode === 'range') {
 			const startCell = this.rangeStartCell;
-			const endCell = pathFinder.cell(e.path);
+			const endCell = td;
 
 			if (startCell && endCell) {
 				this.navigate(endCell);
@@ -107,37 +138,66 @@ export class BodyCtrl extends View {
 	}
 
 	onMouseLeave() {
-		const highlightRow = this.view.highlight.row;
-		this.model
-			.highlight()
-			.rows
-			.forEach(i => highlightRow.execute(i, false));
+		const { highlight } = this.view;
+		const { rows, cell } = this.model.highlight();
+
+		rows.forEach(rowIndex => highlight.row.execute(rowIndex, false));
+
+		if (cell) {
+			highlight.cell.execute(null, false);
+		}
 	}
 
-	onMouseUp() {
-		if (this.selection.mode === 'range') {
-			this.rangeStartCell = null;
+	onMouseUp(e) {
+		const { mode } = this.selection;
+		const { edit } = this.model;
+
+		if (checkButtonCode(e, LEFT_BUTTON)) {
+			const pathFinder = new PathService(this.bag.body);
+			const cell = pathFinder.cell(eventPath(e));
+
+			if (mode === 'range') {
+				this.rangeStartCell = null;
+			}
+
+			if (edit().state === 'startBatch') {
+				edit({ state: 'endBatch' }, { source: 'body.ctrl' });
+				return;
+			}
+
+			if (cell) {
+				const { state: beforeSelectState } = edit();
+				this.select(cell);
+				this.navigate(cell);
+
+				if (beforeSelectState === 'view' && this.view.edit.cell.enter.canExecute(cell)) {
+					this.view.edit.cell.enter.execute(cell);
+				}
+			}
 		}
 	}
 
 	select(cell) {
-		const selectionState = this.selection;
-		if (cell.column.type !== 'select' &&
-			(selectionState.area !== 'body' || selectionState.mode === 'range')) {
+		const { area, mode, unit } = this.selection;
+		if (cell.column.type !== 'select' && (area !== 'body' || mode === 'range')) {
 			return;
 		}
 
 		const model = this.model;
 		const editMode = model.edit().mode;
-		switch (selectionState.unit) {
+		switch (unit) {
 			case 'row': {
 				if (cell.column.type === 'select' && cell.column.editorOptions.trigger === 'focus') {
 					const focusState = model.focus();
 					if (focusState.rowIndex !== cell.rowIndex || focusState.columnIndex !== cell.columnIndex) {
+						if (this.view.selection.toggleRow.canExecute(cell.row)) {
+							this.view.selection.toggleRow.execute(cell.row, 'body');
+						}
+					}
+				} else if (!editMode && cell.column.class !== 'control') {
+					if (this.view.selection.toggleRow.canExecute(cell.row)) {
 						this.view.selection.toggleRow.execute(cell.row, 'body');
 					}
-				} else if (!editMode && cell.column.canEdit) {
-					this.view.selection.toggleRow.execute(cell.row, 'body');
 				}
 				break;
 			}

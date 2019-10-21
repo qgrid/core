@@ -1,6 +1,6 @@
-import {ColumnView} from '../scene/view';
-import {DataColumnModel} from './data.column.model';
-import {TemplatePath} from '../template';
+import { ColumnView } from '../scene/view/column.view';
+import { DataColumnModel } from './data.column.model';
+import { TemplatePath } from '../template/template.path';
 
 TemplatePath.register('currency-cell', (template, column) => {
 	return {
@@ -19,7 +19,7 @@ TemplatePath.register('currency-cell-edit', (template, column) => {
 
 export class CurrencyColumnModel extends DataColumnModel {
 	constructor() {
-		super('text');
+		super('currency');
 
 		this.maxLength = 20;
 		this.symbol = '$';

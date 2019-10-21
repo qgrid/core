@@ -1,30 +1,15 @@
-import {ColumnModel} from '../column-type/column.model';
-
-export declare class IBagCell {
-	element: HTMLElement;
-	rowIndex: Number;
-	columnIndex: Number;
-	row: any;
-	column: ColumnModel;
-}
-
-export declare class IBagRow {
-	element: HTMLElement;
-	index: Number;
-}
+import { ColumnModel } from '../column-type/column.model';
+import { Td } from './td';
+import { Tr } from './tr';
 
 export declare class Bag {
 	constructor();
 
-	findModel(element: HTMLElement): any;
-
+	findModel(element: HTMLElement): Tr | Td;
 	hasModel(element: HTMLElement): boolean;
 
-	addRow(row: IBagRow) ;
-
-	addCell(cell: IBagCell);
-
-	deleteRow(row: IBagRow);
-
-	deleteCell(cell: IBagCell);
+	addRow(row: Tr);
+	addCell(cell: Td);
+	deleteRow(row: Tr);
+	deleteCell(cell: Td);
 }

@@ -1,3 +1,3 @@
-import {IPipe} from '../pipe.item';
+import { PipeContext } from '../pipe.item';
 
-export declare const viewPipeUnit: [IPipe<any>];
+export declare const viewPipeUnit: [(rows: any[], context: PipeContext, next: (rows: any[]) => void) => void];

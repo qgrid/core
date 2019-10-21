@@ -1,16 +1,18 @@
-import {Resource} from '../resource';
-import {Command} from '../command';
+import { Resource } from '../resource/resource';
+import { Command } from '../command/command';
 
 export class EditModel {
 	constructor() {
 		this.resource = new Resource();
 		this.mode = null; // cell | row
-		this.state = 'view'; // view | edit
-		this.enter = new Command({source: 'edit.model'});
-		this.commit = new Command({source: 'edit.model'});
-		this.cancel = new Command({source: 'edit.model'});
-		this.reset = new Command({source: 'edit.model'});
-		this.clear = new Command({source: 'edit.model'});
+		this.state = 'view'; // view | edit | startBatch | endBatch
+		this.method = null; // batch
+		
+		this.enter = new Command({ source: 'edit.model' });
+		this.commit = new Command({ source: 'edit.model' });
+		this.cancel = new Command({ source: 'edit.model' });
+		this.reset = new Command({ source: 'edit.model' });
+		this.clear = new Command({ source: 'edit.model' });
 
 		this.cancelShortcuts = {
 			'$default': 'escape'
@@ -27,8 +29,8 @@ export class EditModel {
 			'reference': 'ctrl+s',
 			'row': 'ctrl+s',
 			'form': 'ctrl+s',
-			'select': 'space|enter',
-			'bool': 'tab|shift+tab|left|right|up|down|home|end|pageUp|pageDown'
+			'bool': 'tab|shift+tab|left|right|up|down|home|end|pageUp|pageDown',
+			'text-area': 'ctrl+s'
 		};
 	}
 }

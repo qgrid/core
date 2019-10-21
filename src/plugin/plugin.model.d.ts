@@ -1,6 +1,5 @@
-import {Resource} from '../resource/resource';
+import { Resource } from '../resource/resource';
 
-export declare class PluginModel {
-	constructor();
-	resource: Resource;
+export declare interface PluginModel {
+	imports?: { [key: string]: any };
 }

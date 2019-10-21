@@ -1,19 +1,15 @@
-import {Log} from '../infrastructure';
-import {Command} from '../command';
-import {RowEditor} from './edit.row.editor';
-import {View} from '../view';
+import { Log } from '../infrastructure/log';
+import { Command } from '../command/command';
+import { RowEditor } from './edit.row.editor';
 
-export class EditRowView extends View {
-	constructor(model, table, commandManager) {
-		super();
-
+export class EditRowView {
+	constructor(model, table, shortcut) {
 		this.model = model;
 		this.table = table;
 		this.editor = RowEditor.empty;
 
-		const shortcut = model.action().shortcut;
 		const commands = this.commands;
-		this.shortcutOff = shortcut.register(commandManager, commands);
+		shortcut.register(commands);
 
 		this.enter = commands.get('enter');
 		this.commit = commands.get('commit');
@@ -40,9 +36,10 @@ export class EditRowView extends View {
 						e.stopImmediatePropagation();
 					}
 
-					const columns = this.model.data().columns;
+					const columns = this.model.columnList().line;
+
 					this.editor = new RowEditor(row, columns);
-					model.edit({state: 'edit'});
+					model.edit({ state: 'edit' }, { source: 'edit.row.view' });
 				}
 			}),
 			commit: new Command({
@@ -64,7 +61,7 @@ export class EditRowView extends View {
 
 					this.editor.commit();
 					this.editor = RowEditor.empty;
-					model.edit({state: 'view'});
+					model.edit({ state: 'view' }, { source: 'edit.row.view' });
 				}
 			}),
 			cancel: new Command({
@@ -85,7 +82,7 @@ export class EditRowView extends View {
 
 					this.editor.reset();
 					this.editor = RowEditor.empty;
-					model.edit({state: 'view'});
+					model.edit({ state: 'view' }, { source: 'edit.row.view' });
 				}
 			}),
 			reset: new Command({
@@ -128,11 +125,5 @@ export class EditRowView extends View {
 			const shortcuts = edit()[type + 'Shortcuts'];
 			return shortcuts['row'] || shortcuts['$default'];
 		};
-	}
-
-	dispose() {
-		super.dispose();
-
-		this.shortcutOff();
 	}
 }

@@ -1,5 +1,6 @@
-import {identity, isObject, isArray, isBoolean, isEmail, isString} from '../utility';
+import { identity, isObject, isArray, isBoolean, isEmail, isString, isUrl, isImage, isUndefined } from '../utility/kit';
 
+// TODO: right now we check the empty result on null, we need to have a way to make it more explicitly
 export function parseFactory(type, editor) {
 	switch (type) {
 		case 'id': {
@@ -29,6 +30,21 @@ export function parseFactory(type, editor) {
 	}
 }
 
+export function resolveType(values) {
+	const types = values
+		.filter(x => !(isUndefined(x) || x === null || x === ''))
+		.map(getType);
+
+	if (types.length) {
+		const test = types[0];
+		if (types.every(x => x === test)) {
+			return test;
+		}
+	}
+
+	return 'text';
+}
+
 export function getType(value) {
 	if (isArray(value)) {
 		if (value.length) {
@@ -41,20 +57,28 @@ export function getType(value) {
 		return 'array';
 	}
 
-	if (parseNumber(value) !== null && !isNaN(value)) {
+	if (isNumber(value)) {
 		return 'number';
 	}
 
-	if (parseBool(value) !== null) {
+	if (isBoolean(value)) {
 		return 'bool';
 	}
 
-	if (parseDate(value) !== null) {
+	if (isDate(value)) {
 		return 'date';
 	}
 
 	if (isEmail(value)) {
 		return 'email';
+	}
+
+	if (isImage(value)) {
+		return 'image';
+	}
+
+	if (isUrl(value)) {
+		return 'url';
 	}
 
 	if (isString(value)) {
@@ -71,6 +95,7 @@ export function getType(value) {
 export function isPrimitive(type) {
 	switch (type) {
 		case 'date':
+		case 'time':
 		case 'bool':
 		case 'text':
 		case 'number':
@@ -82,24 +107,46 @@ export function isPrimitive(type) {
 	}
 }
 
+function isDate(value) {
+	if (value === null || isUndefined(value) || value === '') {
+		return false;
+	}
+
+	if (value instanceof Date) {
+		return true;
+	}
+
+	value = '' + value;
+	return !!value.match(/^(\d{4})(-(\d{2})(-(\d{2})([T ](\d{2}):(\d{2})(:(\d{2})(\.(\d+))?)?(Z|(([-+])(\d{2})(:?(\d{2}))?))?)?)?)?$/);
+}
+
+function isNumber(value) {
+	if (isNaN(value)) {
+		return false;
+	}
+
+	const number = Number.parseFloat(value);
+	return !isNaN(number) && isFinite(number);
+}
+
 function parseBool(value) {
-	return isBoolean(value)
+	return value === null || isUndefined(value)
 		? value
-		: value === 'true'
-			? true
-			: value === 'false'
-				? false
-				: null;
+		: !!value;
 }
 
 function parseText(value) {
-	return value !== null
-		? '' + value
-		: null;
+	return value === null || isUndefined(value)
+		? value
+		: '' + value;
 }
 
 function parseDate(value) {
-	if (value === null) {
+	if (value === null || isUndefined(value)) {
+		return value
+	}
+
+	if (value === '') {
 		return null;
 	}
 
@@ -107,35 +154,19 @@ function parseDate(value) {
 		return value;
 	}
 
-	value = '' + value;
-	const m = value.match(/^(\d{4})(-(\d{2})(-(\d{2})([T ](\d{2}):(\d{2})(:(\d{2})(\.(\d+))?)?(Z|(([-+])(\d{2})(:?(\d{2}))?))?)?)?)?$/);
-	if (m) {
-		const utc = Date.UTC(
-			m[1],
-			m[3] ? m[3] - 1 : 0,
-			m[5] || 1,
-			m[7] || 0,
-			m[8] || 0,
-			m[10] || 0,
-			m[12] ? Number('0.' + m[12]) * 1000 : 0
-		);
-		const date = new Date(utc);
-		if (m[13]) { // has gmt offset or Z
-			if (m[14]) { // has gmt offset
-				date.setUTCMinutes(
-					date.getUTCMinutes() +
-					(m[15] == '-' ? 1 : -1) * (Number(m[16]) * 60 + (m[18] ? Number(m[18]) : 0))
-				);
-			}
-		}
-		return date;
-	}
-
-	return null;
+	return new Date('' + value);
 }
 
 function parseNumber(value) {
-	const number = parseFloat(value);
+	if (value === null || isUndefined(value)) {
+		return value
+	}
+
+	if (value === '' || isNaN(value)) {
+		return null;
+	}
+
+	const number = Number.parseFloat(value);
 	if (!isNaN(number) && isFinite(number)) {
 		return number;
 	}
@@ -144,9 +175,5 @@ function parseNumber(value) {
 }
 
 function parseArray(value) {
-	if (isArray(value)) {
-		return value;
-	}
-
-	return null;
+	return value;
 }

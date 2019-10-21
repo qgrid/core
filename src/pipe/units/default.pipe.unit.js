@@ -1,4 +1,4 @@
-import {Pipe} from '../pipe';
+import { Pipe } from '../pipe';
 
 export const defaultPipeUnit = [
 	Pipe.data,
@@ -9,5 +9,8 @@ export const defaultPipeUnit = [
 	Pipe.pivot,
 	Pipe.column,
 	Pipe.pagination,
+	Pipe.animation,
 	Pipe.view
 ];
+
+defaultPipeUnit.why = 'refresh';

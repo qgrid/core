@@ -1,4 +1,5 @@
-import {Resource} from '../resource';
+import { Resource } from '../resource/resource';
+import { Command } from '../command/command';
 
 export class RowModel {
 	constructor() {
@@ -10,9 +11,11 @@ export class RowModel {
 		this.status = new Map();
 		this.shortcut = {
 			toggle: 'space|enter'
-        };
-        this.canDrag = false;
-        this.canResize = false;
-        this.frozen = [];
+		};
+		this.canMove = false;
+		this.canResize = false;
+		this.pinTop = [];
+		this.pinBottom = [];
+		this.toggle = new Command();
 	}
 }

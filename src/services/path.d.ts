@@ -1,6 +1,3 @@
-export interface ICompileResult{
-	(entry: object, value: any): string;
-}
-
-export declare function compile(path: string): ICompileResult;
-
+export declare function compile(parts: string[]): (entry: any, value?: any) => any;
+export declare function compileGet(path: string): (entry: any) => any;
+export declare function compileSet(path: string): (entry: any, value: any) => void;

@@ -1,40 +1,27 @@
-import {View} from '../view';
-
-export class PaginationView extends View {
+export class PaginationView {
 	constructor(model) {
-		super(model);
+		this.model = model;
 
-		this.using(model.dataChanged.watch(e => {
-			if (e.hasChanges('rows') && e.tag.behavior !== 'core') {
-				model.pagination({
-					current: 0
-				});
-			}
-		}));
+		const { resetTriggers } = model.pagination();
+		Object.keys(resetTriggers)
+			.forEach(name =>
+				model[name + 'Changed']
+					.on(e => {
+						if (e.tag.behavior === 'core') {
+							return;
+						}
 
-		this.using(model.filterChanged.watch(e => {
-			if (e.hasChanges('by')) {
-				model.pagination({
-					current: 0
-				});
-			}
-		}));
+						if (model.scroll().mode === 'virtual') {
+							return;
+						}
 
-		this.using(model.pivotChanged.watch(e => {
-			if (e.hasChanges('by')) {
-				model.pagination({
-					current: 0
-				});
-			}
-		}));
-
-		this.using(model.groupChanged.watch(e => {
-			if (e.hasChanges('by')) {
-				model.pagination({
-					current: 0
-				});
-			}
-		}));
+						const trigger = resetTriggers[name];
+						for (const key of trigger) {
+							if (e.hasChanges(key)) {
+								model.pagination({ current: 0 }, { source: e.tag.source || 'pagination.view' });
+							}
+						}
+					}));
 	}
 
 	get current() {

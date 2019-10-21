@@ -1,5 +1,39 @@
-import {isFunction} from '../utility';
-import {AppError} from '../infrastructure/error';
+import { isFunction } from '../utility/kit';
+import { AppError } from '../infrastructure/error';
+import { expand, collapse } from './column.matrix';
+
+export function flatten(columns, result = []) {
+	for (let i = 0, length = columns.length; i < length; i++) {
+		const column = columns[i];
+		result.push(column);
+
+		const { children } = column;
+		if (children && children.length) {
+			flatten(children, result);
+		}
+	}
+
+	return result;
+}
+
+export function findLine(columns, key) {
+	for (let index = 0, length = columns.length; index < length; index++) {
+		const column = columns[index];
+		if (column.key === key) {
+			return { columns, index };
+		}
+
+		const { children } = column;
+		if (children.length) {
+			const result = findLine(children, key);
+			if (result) {
+				return result;
+			}
+		}
+	}
+
+	return null;
+}
 
 export function map(columns) {
 	return columns.reduce((memo, column) => {
@@ -45,66 +79,9 @@ export function lineView(columnRows) {
 	return [];
 }
 
-export function expand(columnRows) {
-	const height = columnRows.length;
-	const view = [];
-	const cursors = [];
-	for (let ri = 0; ri < height; ri++) {
-		const columnRow = columnRows[ri];
-		const columnLength = columnRow.length;
-		let cursor = cursors.length > ri ? cursors[ri] : cursors[ri] = 0;
-		for (let ci = 0; ci < columnLength; ci++) {
-			const column = columnRow[ci];
-			const rowspan = column.rowspan;
-			const colspan = column.colspan;
-			for (let rj = 0; rj < rowspan; rj++) {
-				for (let cj = 0; cj < colspan; cj++) {
-					const rij = ri + rj;
-					const cij = cursor + cj;
-					const viewRow = view.length > rij ? view[rij] : view[rij] = [];
-					viewRow[cij] = column;
-
-					const rijCursor = cursors.length > rij ? cursors[rij] : cursors[rij] = 0;
-					if (rijCursor === cij) {
-						cursors[rij] = rijCursor + 1;
-					}
-				}
-			}
-
-			cursor += colspan;
-			cursors[ri] = cursor;
-		}
-	}
-
-	return view;
-}
-
-export function collapse(view) {
-	const line = [];
-	const height = view.length;
-	if (height) {
-		const set = new Set();
-		const lastRow = view[height - 1];
-		const width = lastRow.length;
-		for (let i = 0; i < width; i++) {
-			const column = lastRow[i];
-			if (set.has(column)) {
-				continue;
-			}
-
-			line.push(column);
-			set.add(column);
-		}
-	}
-
-	return line;
-}
-
 export function widthFactory(table, form) {
-	const layout = table.model.layout;
 	const columns = table.data.columns();
 	const columnMap = map(columns);
-	form = form || layout().columns;
 
 	const occupied = columns
 		.filter(c => form.has(c.key) || ('' + c.width).indexOf('%') < 0)
@@ -119,7 +96,6 @@ export function widthFactory(table, form) {
 
 
 	let area;
-
 	function getRect() {
 		if (area) {
 			return area;
@@ -138,13 +114,16 @@ export function widthFactory(table, form) {
 		let width = size.width;
 		if (width || width === 0) {
 			if (('' + width).indexOf('%') >= 0) {
-				const percent = parseFloat(width);
+				const percent = Number.parseFloat(width);
 				const rect = getRect();
-				const skip = column.widthMode === 'relative' ? occupied : 0;
+				// 2 because pad column has left padding equals to 1px and width 100%
+				// that can produce 1.## values
+				const padSkip = 2;
+				const skip = column.widthMode === 'relative' ? occupied + padSkip : padSkip;
 				width = (rect.width - skip) * percent / 100;
 			}
 
-			return Math.max(parseInt(width), parseInt(column.minWidth));
+			return Math.max(Number.parseInt(width, 10), Number.parseInt(column.minWidth, 10));
 		}
 
 		return null;

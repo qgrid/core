@@ -1,6 +1,5 @@
-import {identity, compare} from '../utility';
-import {Command} from '../command';
-import {TemplatePath} from '../template';
+import { identity, compare } from '../utility/kit';
+import { TemplatePath } from '../template/template.path';
 
 TemplatePath.register('custom-cell', (template, column) => {
 	return {
@@ -22,26 +21,27 @@ export class ColumnModel {
 		this.path = null;
 		this.labelPath = null;
 
-        this.type = type;
+		this.type = type;
 		this.title = null;
+		this.description = null;
 		this.pin = null;
 		this.origin = 'specific';
 		this.source = 'user';
 		this.class = 'data';
 		this.editor = null;
 		this.editorOptions = {
+			modelFactory: ({ createDefaultModel }) => createDefaultModel(),
 			trigger: 'click', // click | custom | focus
 			cruise: 'control', // control | transparent
 			label: null,
 			value: identity,
-			commit: new Command({source: 'column.model'}),
-			cancel: new Command({source: 'column.model'}),
 			actions: []
 		};
 
 		this.width = null;
 		this.minWidth = 20;
 		this.maxWidth = null;
+		this.viewWidth = null;
 
 		this.widthMode = 'relative'; // relative | absolute
 
@@ -57,12 +57,16 @@ export class ColumnModel {
 		this.index = -1;
 
 		this.value = null;
-        this.label = null;
-        
+		this.label = null;
+
 		this.compare = compare;
+
+		this.children = [];
 
 		this.$label = null;
 		this.$value = null;
+
+		this.itemLabel = identity;
 	}
 
 	toString() {

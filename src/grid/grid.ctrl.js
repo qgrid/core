@@ -1,16 +1,21 @@
-import { Table, Bag } from '../dom';
-import { AppError } from '../infrastructure';
-import { Model } from '../infrastructure';
+import { Bag } from '../dom/bag';
+import { Table } from '../dom/table';
+import { AppError } from '../infrastructure/error';
+import { Model } from '../infrastructure/model';
 import { GRID_PREFIX } from '../definition';
-import { View } from '../view/view';
 import { Shortcut } from '../shortcut/shortcut';
+import { Fastdom } from '../services/fastdom';
+import { Disposable } from '../infrastructure/disposable';
 
-export class GridCtrl extends View {
+export class GridCtrl extends Disposable {
 	constructor(model, context) {
-		super(model);
+		super();
 
-		if (model.grid().status === 'bound') {
-			throw new AppError('grid', `Model is already used by grid "${model.grid().id}"`);
+		this.model = model;
+
+		const { grid } = model;
+		if (grid().status === 'bound') {
+			throw new AppError('grid.ctrl', `Model is already used by grid "${grid().id}"`);
 		}
 
 		this.markup = { document };
@@ -26,7 +31,7 @@ export class GridCtrl extends View {
 			element.id = model.grid().id;
 		}
 
-		model.grid({ status: 'bound' });
+		grid({ status: 'bound' }, { source: 'grid.ctrl' });
 
 		const layerFactory = context.layerFactory(this.markup);
 		const tableContext = {
@@ -36,63 +41,64 @@ export class GridCtrl extends View {
 
 		this.table = new Table(model, this.markup, tableContext);
 
-		this.using(model.sceneChanged.watch(e => {
+		model.sceneChanged.watch(e => {
 			if (e.hasChanges('column')) {
 				this.invalidateVisibility();
-			}
-		}));
-	}
-
-
-	keyDown(e, source = 'grid') {
-		const shortcut = this.model.action().shortcut;
-		if (shortcut.keyDown(e, source)) {
-			e.preventDefault();
-			e.stopPropagation();
-			return;
-		}
-
-		if (e.target.tagName === 'TBODY') {
-			const code = Shortcut.translate(e);
-			if (code === 'space' || code === 'shift+space') {
-				e.preventDefault();
-			}
-			return;
-		}
-	}
-
-	invalidateVisibility() {
-		const area = this.model.scene().column.area;
-		const visibility = this.model.visibility;
-		visibility({
-			pin: {
-				left: area.left.length,
-				right: area.right.length
 			}
 		});
 	}
 
-	invalidateActive() {
-		const activeClassName = `${GRID_PREFIX}-active`;
-		const view = this.table.view;
+	keyDown(e, source = 'grid') {
 		const model = this.model;
+		const { shortcut } = model.action();
+		const result = shortcut.keyDown(e, source);
+		if (result.length > 0) {
+			e.preventDefault();
+			e.stopPropagation();
+			return result;
+		}
+
+		if (e.target.tagName === 'TBODY') {
+			const code = Shortcut.translate(e);
+			const { prevent } = model.navigation();
+			if (prevent.has(code)) {
+				e.preventDefault();
+				e.stopPropagation();
+			}
+		}
+
+		return result;
+	}
+
+	invalidateVisibility() {
+		const { left, right } = this.model.scene().column.area;
+		const { pinTop, pinBottom } = this.model.row();
+
+		this.model.visibility({
+			pin: {
+				left: left.length > 0,
+				right: right.length > 0,
+				top: pinTop.length > 0,
+				bottom: pinBottom.length > 0
+			}
+		}, {
+				source: 'grid.ctrl'
+			});
+	}
+
+	invalidateActive() {
+		const { view, model } = this.table;
 		if (view.isFocused()) {
-			view.addClass(activeClassName);
-			model.focus({ isActive: true });
+			model.focus({ isActive: true }, { source: 'grid.ctrl' });
 		}
 		else {
-			view.removeClass(activeClassName);
-			model.focus({ isActive: false });
+			model.focus({ isActive: false }, { source: 'grid.ctrl' });
 		}
 	}
 
 	dispose() {
 		super.dispose();
 
-		this.model.grid({
-			status: 'unbound'
-		});
-
-		Model.dispose(this.model, 'component');
+		this.model.grid({ status: 'unbound' }, { source: 'grid.ctrl' });
 	}
 }

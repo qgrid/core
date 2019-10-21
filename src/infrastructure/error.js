@@ -1,4 +1,4 @@
-import {isFunction} from '../utility';
+import { isFunction } from '../utility/kit';
 
 export class AppError extends Error {
 	constructor(name, message) {

@@ -1,7 +1,3 @@
-import {IPivot} from '../pipe/pipe.item';
+import { PipePivot } from '../pipe/pipe.item';
 
-export interface IComparator {
-	(): any;
-}
-
-export declare function pivotForm(source: object, comparator: IComparator): IPivot;
+export declare function pivotForm(source: { schema: any, data: any }, comparator: (x: any, y: any) => number): PipePivot;

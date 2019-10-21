@@ -1,58 +1,74 @@
-import {BodyView} from '../body';
-import {HeadView} from '../head';
-import {FootView} from '../foot';
-import {LayoutView} from '../layout';
-import {GroupView} from '../group';
-import {PivotView} from '../pivot';
-import {NavigationView} from '../navigation';
-import {HighlightView} from '../highlight';
-import {SortView} from '../sort';
-import {FilterView} from '../filter';
-import {EditView} from '../edit';
-import {SelectionView} from '../selection';
-import {PaginationView} from '../pagination';
-import {StyleView} from '../style';
-import {ScrollView} from '../scroll';
-import {RowDetailsView} from '../row-details';
-import {RowView} from '../row';
+import { Model } from '../infrastructure/model';
+import { ModelProxy } from '../infrastructure/model.proxy';
+import { Disposable } from '../infrastructure/disposable';
+import { SelectionCommandManager } from '../selection/selection.command.manager';
+import { BodyView } from '../body/body.view';
+import { EditView } from '../edit/edit.view';
+import { FilterView } from '../filter/filter.view';
+import { FootView } from '../foot/foot.view';
+import { GroupView } from '../group/group.view';
+import { HeadView } from '../head/head.view';
+import { HighlightView } from '../highlight/highlight.view';
+import { LayoutView } from '../layout/layout.view';
+import { NavigationView } from '../navigation/navigation.view';
+import { PaginationView } from '../pagination/pagination.view';
+import { RowDetailsView } from '../row-details/row.details.view';
+import { RowView } from '../row/row.view';
+import { ScrollView } from '../scroll/scroll.view';
+import { SelectionView } from '../selection/selection.view';
+import { SortView } from '../sort/sort.view';
+import { StyleView } from '../style/style.view';
 
-export function viewFactory(model, table, commandManager, gridService, vscroll, selectors){
-	return target => {
-		target.style = new StyleView(model, table);
-		target.head = new HeadView(model, table, selectors.th);
-		target.body = new BodyView(model, table);
-		target.foot = new FootView(model, table);
-		target.layout = new LayoutView(model, table, gridService);
-		target.selection = new SelectionView(model, table, commandManager);
-		target.group = new GroupView(model, table, commandManager, gridService);
-		target.pivot = new PivotView(model);
-		target.highlight = new HighlightView(model, table);
-		target.sort = new SortView(model);
-		target.filter = new FilterView(model);
-		target.edit = new EditView(model, table, commandManager);
-		target.nav = new NavigationView(model, table, commandManager);
-		target.pagination = new PaginationView(model);
-		target.scroll = new ScrollView(model, table, vscroll);
-        target.rowDetails = new RowDetailsView(model, table, commandManager);
-        target.row = new RowView(model, selectors.tr);
+export function viewFactory(
+	model,
+	table,
+	commandManager,
+	gridService,
+	vscroll,
+	selectors
+) {
+	const proxy = new ModelProxy(model);
+	const basket = new Disposable();
+	const { shortcut } = model.action();
+	const navigationShortcut = {
+		register: commands => {
+			basket.using(shortcut.register(commandManager, commands));
+		},
+		keyCode: () => shortcut.keyCode
+	};
+
+	const selectionCommandManager = new SelectionCommandManager(model, commandManager);
+	const selectionShortcut = {
+		register: commands => {
+			basket.using(shortcut.register(selectionCommandManager, commands));
+		}
+	};
+
+	return host => {
+		const modelProxy = proxy.subject;
+
+		host.head = new HeadView(modelProxy, table, selectors.th);
+		host.body = new BodyView(modelProxy, table);
+		host.foot = new FootView(modelProxy, table);
+		host.row = new RowView(modelProxy, table, selectors.tr);
+		host.layout = new LayoutView(modelProxy, table, gridService);
+		host.scroll = new ScrollView(modelProxy, table, vscroll, gridService);
+		host.highlight = new HighlightView(modelProxy, table);
+		host.sort = new SortView(modelProxy);
+		host.pagination = new PaginationView(modelProxy);
+		host.nav = new NavigationView(modelProxy, table, navigationShortcut);
+		host.group = new GroupView(modelProxy, table, gridService, navigationShortcut);
+		host.edit = new EditView(modelProxy, table, navigationShortcut);
+		host.filter = new FilterView(modelProxy);
+		host.rowDetails = new RowDetailsView(modelProxy, table, navigationShortcut);
+		host.selection = new SelectionView(modelProxy, table, selectionShortcut);
+		host.style = new StyleView(modelProxy, table);
 
 		return () => {
-			target.style.dispose();
-			target.head.dispose();
-			target.body.dispose();
-			target.foot.dispose();
-			target.layout.dispose();
-			target.selection.dispose();
-			target.group.dispose();
-			target.pivot.dispose();
-			target.highlight.dispose();
-			target.sort.dispose();
-			target.filter.dispose();
-			target.edit.dispose();
-			target.nav.dispose();
-			target.pagination.dispose();
-			target.scroll.dispose();
-			target.rowDetails.dispose();
+			host.layout.dispose();
+
+			proxy.dispose();
+			basket.dispose();
 		};
 	};
 }

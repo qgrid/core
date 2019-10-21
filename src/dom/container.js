@@ -1,5 +1,6 @@
-import * as css from '../services/css';
-import {min, max} from '../utility';
+import { escapeAttr } from '../services/css';
+import { min, max } from '../utility/kit';
+import { Guard } from '../infrastructure/guard';
 
 export class Container {
 	constructor(elements) {
@@ -23,15 +24,15 @@ export class Container {
 	}
 
 	addClass(name) {
-		this.elements.forEach(element => element.classList.add(css.escapeAttr(name)));
+		this.elements.forEach(element => element.classList.add(escapeAttr(name)));
 	}
 
 	removeClass(name) {
-		this.elements.forEach(element => element.classList.remove(css.escapeAttr(name)));
+		this.elements.forEach(element => element.classList.remove(escapeAttr(name)));
 	}
 
 	hasClass(name) {
-		return this.elements.some(element => element.classList.contains(name));
+		return this.elements.some(element => element.classList.contains(escapeAttr(name)));
 	}
 
 	get clientWidth() {
@@ -56,5 +57,37 @@ export class Container {
 			remove: name => this.removeClass(name),
 			contains: name => this.hasClass(name)
 		};
+	}
+}
+
+export class TrContainer {
+	constructor(elements) {
+		this.elements = elements;
+	}
+
+	get index() {
+		const tr = this.elements[0];
+		Guard.notNull(tr, "tr");
+
+		return tr.index;
+	}
+
+	get model() {
+		const tr = this.elements[0];
+		Guard.notNull(tr, "tr");
+
+		return tr && tr.model;
+	}
+
+	get element() {
+		const { elements } = this;
+		if (elements.length > 1) {
+			return new Container(elements.map(tr => tr.element));
+		}
+
+		const tr = this.elements[0];
+		Guard.notNull(tr, "tr");
+
+		return tr.element;
 	}
 }

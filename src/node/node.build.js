@@ -1,5 +1,5 @@
-import {AppError} from '../infrastructure';
-import {Node} from './node';
+import { AppError } from '../infrastructure/error';
+import { Node } from './node';
 
 export function nodeBuilder(columnMap, groupBy, valueFactory, level = 0) {
 	if (groupBy.length === 0) {
@@ -23,6 +23,7 @@ export function nodeBuilder(columnMap, groupBy, valueFactory, level = 0) {
 			const key = getValue(row);
 			if (!groups.hasOwnProperty(key)) {
 				const node = new Node(key, level);
+				node.source = groupKey;
 				node.rows.push(index);
 				keys.push(key);
 				nodes.push(node);

@@ -1,178 +1,215 @@
-import {GridModel} from '../grid/grid.model';
-import {SceneModel} from '../scene/scene.model';
-import {ViewModel} from '../view/view.model';
-import {DataModel} from '../data/data.model';
-import {HeadModel} from '../head/head.model';
-import {BodyModel} from '../body/body.model';
-import {LayoutModel} from '../layout/layout.model';
-import {NavigationModel} from '../navigation/navigation.model';
-import {FocusModel} from '../focus/focus.model';
-import {ColumnListModel} from '../column-list/column.list.model';
-import {RowModel} from '../row/row.model';
-import {SelectionModel} from '../selection/selection.model';
-import {FootModel} from '../foot/foot.model';
-import {SortModel} from '../sort/sort.model';
-import {GroupModel} from '../group/group.model';
-import {PivotModel} from '../pivot/pivot.model';
-import {PluginModel} from '../plugin/plugin.model';
-import {EditModel} from '../edit/edit.model';
-import {ToolbarModel} from '../toolbar/toolbar.model';
-import {LayerModel} from '../layer/layer.model';
-import {PaginationModel} from '../pagination/pagination.model';
-import {ProgressModel} from '../progress/progress.model';
-import {HighlightModel} from '../highlight/highlight.model';
-import {VisibilityModel} from '../visibility/visibility.model';
-import {FilterModel} from '../filter/filter.model';
-import {DragModel} from '../drag/drag.model';
-import {StyleModel} from '../style/style.model';
-import {ScrollModel} from '../scroll/scroll.model';
-import {ExportModel} from '../export/export.model';
-import {ActionModel} from '../action/action.model';
-import {FetchModel} from '../fetch/fetch.model';
-import {ValidationModel} from '../validation/validation.model';
-import {Event} from './event';
-import {PersistenceModel} from '../persistence/persistence.model';
-import {PipeModel} from '../pipe/pipe.model'; 
+import { GridModel } from '../grid/grid.model';
+import { SceneModel } from '../scene/scene.model';
+import { ViewModel } from '../view/view.model';
+import { DataModel } from '../data/data.model';
+import { HeadModel } from '../head/head.model';
+import { BodyModel } from '../body/body.model';
+import { LayoutModel } from '../layout/layout.model';
+import { NavigationModel } from '../navigation/navigation.model';
+import { FocusModel } from '../focus/focus.model';
+import { ColumnListModel } from '../column-list/column.list.model';
+import { RowModel } from '../row/row.model';
+import { SelectionModel } from '../selection/selection.model';
+import { FootModel } from '../foot/foot.model';
+import { SortModel } from '../sort/sort.model';
+import { GroupModel } from '../group/group.model';
+import { PivotModel } from '../pivot/pivot.model';
+import { PluginModel } from '../plugin/plugin.model';
+import { EditModel } from '../edit/edit.model';
+import { ToolbarModel } from '../toolbar/toolbar.model';
+import { LayerModel } from '../layer/layer.model';
+import { PaginationModel } from '../pagination/pagination.model';
+import { ProgressModel } from '../progress/progress.model';
+import { HighlightModel } from '../highlight/highlight.model';
+import { VisibilityModel } from '../visibility/visibility.model';
+import { FilterModel } from '../filter/filter.model';
+import { DragModel } from '../drag/drag.model';
+import { StyleModel } from '../style/style.model';
+import { ScrollModel } from '../scroll/scroll.model';
+import { ExportModel } from '../export/export.model';
+import { ActionModel } from '../action/action.model';
+import { FetchModel } from '../fetch/fetch.model';
+import { ValidationModel } from '../validation/validation.model';
+import { Event } from './event';
+import { PersistenceModel } from '../persistence/persistence.model';
+import { PipeModel } from '../pipe/pipe.model';
+import { RestModel } from '../rest/rest.model';
+import { AnimationModel } from '../animation/animation.model';
+import { RowListModel } from '../row-list/row.list.model';
 
-export declare class Model {
-	constructor();
+export declare interface ModelTag {
+	source?: string;
+	behavior?: string;
+	isBusy?: boolean;
+}
 
-	static register(name: string, model: {new(): {}}): typeof Model;
+export declare interface ModelEventArg<T> {
+	state: T;
+	changes: { [key: string]: { newValue: any, oldValue: any } };
+	hasChanges: (key: string) => boolean;
+	tag: ModelTag;
+}
 
-	grid(value: object, tag?: object): Model;
+export declare type ModelEvent<T> = Event<ModelEventArg<T>>;
+
+export declare interface Model {
+	gridChanged: ModelEvent<GridModel>;
+	grid(value: GridModel, tag?: ModelTag): Model;
 	grid(): GridModel;
-	gridChanged: Event;
 
-	pipe(value: object, tag?: object): Model;
+	pipeChanged: ModelEvent<PipeModel>;
+	pipe(value: PipeModel, tag?: ModelTag): Model;
 	pipe(): PipeModel;
-	pipeChanged: Event;	
 
-	scene(value: object, tag?: object): Model;
+	sceneChanged: ModelEvent<SceneModel>;
+	scene(value: SceneModel, tag?: ModelTag): Model;
 	scene(): SceneModel;
-	sceneChanged: Event;
 
-	edit(value: object, tag?: object): Model;
+	editChanged: ModelEvent<EditModel>;
+	edit(value: EditModel, tag?: ModelTag): Model;
 	edit(): EditModel;
-	editChanged: Event;
 
-	view(value: object, tag?: object): Model;
+	viewChanged: ModelEvent<ViewModel>;
+	view(value: ViewModel, tag?: ModelTag): Model;
 	view(): ViewModel;
-	viewChanged: Event;
 
-	data(value: object, tag?: object): Model;
+	dataChanged: ModelEvent<DataModel>;
+	data(value: DataModel, tag?: ModelTag): Model;
 	data(): DataModel;
-	dataChanged: Event;
 
-	head(value: object, tag?: object): Model;
+	headChanged: ModelEvent<HeadModel>;
+	head(value: HeadModel, tag?: ModelTag): Model;
 	head(): HeadModel;
-	headChanged: Event;
 
-	body(value: object, tag?: object): Model;
+	bodyChanged: ModelEvent<BodyModel>;
+	body(value: BodyModel, tag?: ModelTag): Model;
 	body(): BodyModel;
-	bodyChanged: Event;
 
-	layout(value: object, tag?: object): Model;
+	layoutChanged: ModelEvent<LayoutModel>;
+	layout(value: LayoutModel, tag?: ModelTag): Model;
 	layout(): LayoutModel;
-	layoutChanged: Event;
 
-	navigation(value: object, tag?: object): Model;
+	navigationChanged: ModelEvent<NavigationModel>;
+	navigation(value: NavigationModel, tag?: ModelTag): Model;
 	navigation(): NavigationModel;
-	navigationChanged: Event;
 
-	focus(value: object, tag?: object): Model;
+	focusChanged: ModelEvent<FocusModel>;
+	focus(value: FocusModel, tag?: ModelTag): Model;
 	focus(): FocusModel;
-	focusChanged: Event;
 
-	columnList(value: object, tag?: object): Model;
+	columnListChanged: ModelEvent<ColumnListModel>;
+	columnList(value: ColumnListModel, tag?: ModelTag): Model;
 	columnList(): ColumnListModel;
-	columnChanged: Event;
 
-	row(value: object, tag?: object): Model;
-	row(): RowModel;	
-	rowChanged: Event;
+	rowChanged: ModelEvent<RowModel>;
+	row(value: RowModel, tag?: ModelTag): Model;
+	row(): RowModel;
 
-	selection(value: object, tag?: object): Model;
+	rowListChanged: ModelEvent<RowListModel>;
+	rowList(value: RowListModel, tag?: ModelTag): Model;
+	rowList(): RowListModel;
+
+	selectionChanged: ModelEvent<SelectionModel>;
+	selection(value: SelectionModel, tag?: ModelTag): Model;
 	selection(): SelectionModel;
-	selectionChanged: Event;
 
-	foot(value: object, tag?: object): Model;
+	footChanged: ModelEvent<FootModel>;
+	foot(value: FootModel, tag?: ModelTag): Model;
 	foot(): FootModel;
-	footChanged: Event;
 
-	sort(value: object, tag?: object): Model;
+	sortChanged: ModelEvent<SortModel>;
+	sort(value: SortModel, tag?: ModelTag): Model;
 	sort(): SortModel;
 
-	sortChanged: Event;
-
-	group(value: object, tag?: object): Model;
+	groupChanged: ModelEvent<GroupModel>;
+	group(value: GroupModel, tag?: ModelTag): Model;
 	grop(): GroupModel;
-	groupChanged: Event;
 
-	pivot(value: object, tag?: object): Model;
+	pivotChanged: ModelEvent<PivotModel>;
+	pivot(value: PivotModel, tag?: ModelTag): Model;
 	pivot(): PivotModel;
-	pivotChanged: Event;
 
-	plugin(value: object, tag?: object): Model;
+	pluginChanged: ModelEvent<PluginModel>;
+	plugin(value: PluginModel, tag?: ModelTag): Model;
 	plugin(): PluginModel;
-	pluginChanged: Event;
 
-	toolbar(value: object, tag?: object): Model;
+	toolbarChanged: ModelEvent<ToolbarModel>;
+	toolbar(value: ToolbarModel, tag?: ModelTag): Model;
 	toolbar(): ToolbarModel;
-	toolbarChanged: Event;
 
-	layer(value: object, tag?: object): Model;
+	layerChanged: ModelEvent<LayerModel>;
+	layer(value: LayerModel, tag?: ModelTag): Model;
 	layer(): LayerModel;
-	layerChanged: Event;
 
-	pagination(value: object, tag?: object): Model;
+	paginationChanged: ModelEvent<PaginationModel>;
+	pagination(value: PaginationModel, tag?: ModelTag): Model;
 	pagination(): PaginationModel;
-	paginationChanged: Event;
 
-	progress(value: object, tag?: object): Model;
-	progres(): ProgressModel;
-	progressChanged: Event;
+	progressChanged: ModelEvent<ProgressModel>;
+	progress(value: ProgressModel, tag?: ModelTag): Model;
+	progress(): ProgressModel;
 
-	highlight(value: object, tag?: object): Model;
+	highlightChanged: ModelEvent<HighlightModel>;
+	highlight(value: HighlightModel, tag?: ModelTag): Model;
 	highlight(): HighlightModel;
-	highlightChanged: Event;
 
-	visibility(value: object, tag?: object): Model;
+	visibilityChanged: ModelEvent<VisibilityModel>;
+	visibility(value: VisibilityModel, tag?: ModelTag): Model;
 	visibility(): VisibilityModel;
-	visibilityChanged: Event;
 
-	filter(value: object, tag?: object): Model;
+	filterChanged: ModelEvent<FilterModel>;
+	filter(value: FilterModel, tag?: ModelTag): Model;
 	filter(): FilterModel;
-	filterChanged: Event;
 
-	drag(value: object, tag?: object): DragModel;
+	dragChanged: ModelEvent<DragModel>;
+	drag(value: DragModel, tag?: ModelTag): Model;
 	drag(): DragModel;
-	dragChanged: Event;
 
-	style(value: object, tag?: object): Model;
+	styleChanged: ModelEvent<StyleModel>;
+	style(value: StyleModel, tag?: ModelTag): Model;
 	style(): StyleModel;
-	styleChanged: Event;
 
-	scroll(value: object, tag?: object): Model;
+	scrollChanged: ModelEvent<ScrollModel>;
+	scroll(value: ScrollModel, tag?: ModelTag): Model;
 	scroll(): ScrollModel;
-	scrollChanged: Event;
 
-	export(value: object, tag?: object): Model;
+	exportChanged: ModelEvent<ExportModel>;
+	export(value: ExportModel, tag?: ModelTag): Model;
 	export(): ExportModel;
-	exportChanged: Event;
 
-	action(value: object, tag?: object): Model;
+	actionChanged: ModelEvent<ActionModel>;
+	action(value: ActionModel, tag?: ModelTag): Model;
 	action(): ActionModel;
-	actionChanged: Event;
 
-	fetch(value: object, tag?: object): Model;
+	fetchChanged: ModelEvent<FetchModel>;
+	fetch(value: FetchModel, tag?: ModelTag): Model;
 	fetch(): FetchModel;
-	fetchChanged: Event;
 
-	persistence(value: object, tag?: object): Model;
+	persistenceChanged: ModelEvent<PersistenceModel>;
+	persistence(value: PersistenceModel, tag?: ModelTag): Model;
 	persistence(): PersistenceModel;
-	persistenceChanged: Event;
 
-	validation(value: object, tag?: object): Model;
+	validationChanged: ModelEvent<ValidationModel>;
+	validation(value: ValidationModel, tag?: ModelTag): Model;
 	validation(): ValidationModel;
-	validationChanged: Event;
+
+	restChanged: ModelEvent<RestModel>;
+	rest(value: RestModel, tag?: ModelTag): Model;
+	rest(): RestModel;
+
+	animationChanged: ModelEvent<AnimationModel>;
+	animation(value: AnimationModel, tag?: ModelTag): Model;
+	animation(): AnimationModel;
+
+	queryBuilderChanged: ModelEvent<any>;
+	queryBuilder(value: any, tag?: ModelTag): Model;
+	queryBuilder(): any;
+
+	dataManipulationChanged: ModelEvent<any>;
+	dataManipulation(value: any, tag?: ModelTag): Model;
+	dataManipulation(): any;
+
+	columnFilterChanged: ModelEvent<any>;
+	columnFilter(value: any, tag?: ModelTag): Model;
+	columnFilter(): any;
 }

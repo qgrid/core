@@ -1,5 +1,5 @@
-import {ColumnModel} from '../../column-type/column.model';
-import {isObject, isFunction} from '../../utility/index';
+import { ColumnModel } from '../../column-type/column.model';
+import { isObject, isFunction, isArray } from '../../utility/kit';
 
 export class ColumnView {
 	constructor(model) {
@@ -7,7 +7,8 @@ export class ColumnView {
 
 		this.colspan = 1;
 		this.rowspan = 1;
-		this.index = -1;
+		this.rowIndex = -1;
+		this.columnIndex = -1;
 	}
 
 	static model(model) {
@@ -31,9 +32,13 @@ export class ColumnView {
 					etalonValue = etalonValue.bind(body);
 				}
 				body[key] = etalonValue;
-			}
-			else if (isObject(body[key]) && !isFunction(body[key])) {
-				body[key] = Object.assign({}, etalon[key], body[key]);
+			} else {
+				const value = body[key];
+				if (isArray(value)) {
+					body[key] = Array.from(value);
+				} else if (isObject(value) && !isFunction(value)) {
+					body[key] = Object.assign({}, etalon[key], value);
+				}
 			}
 		}
 		return body;

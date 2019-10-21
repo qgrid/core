@@ -3,8 +3,8 @@ import { Model } from '../infrastructure/model';
 
 /**
  * A class that contains setting to control when and how q-grid should be updated.
- * 
- * ## Default Triggers
+ *
+ * ### Default Triggers
  * ```javascript
  *  {
  *	   'data': {
@@ -15,8 +15,7 @@ import { Model } from '../infrastructure/model';
  *		  'size': PU.default
  *		},
  *		'fetch': {
- *		   'skip': PU.default,
- *		   'round': PU.default
+ *		   'skip': PU.default
  *		},
  *		'sort': {
  *		   'by': PU.default
@@ -36,7 +35,7 @@ import { Model } from '../infrastructure/model';
  *		},
  *		'row': {
  *		   'status': PU.rowDetails,
- *         'canDrag': PU.column,
+ *         'canMove': PU.column,
  *         'canResize': PU.column
  *		},
  *		'selection': {
@@ -46,18 +45,17 @@ import { Model } from '../infrastructure/model';
  *  };
  * ```
  */
-export declare class PipeModel {
-    constructor();
+export declare interface PipeModel {
+	/**
+	 * A function that allows to shrink a number of pipe units that should be invoked on referch request.
+	 */
+	reduce?: (xs: PipeUnit[], Model) => PipeUnit[];
 
-    /**
-     * A function that allows to shrink a number of pipe units that should be invoked on referch request.
-     */
-    reduce: (xs: PipeUnit[], Model) => PipeUnit[]
+	/**
+	 * A schema that shows what pipeline will be executed on appropriate model property change.
+	 *
+	 */
+	triggers?: { [modelName: string]: { [modelProperty: string]: PipeUnit } };
 
-    /**
-     * A schema that shows how and when q-grid should be updated.
-     * 
-     * `{col}`
-     */
-    triggers: object;
+	effect: { [key: string]: any }
 }

@@ -1,28 +1,36 @@
 import { CellEditor } from './edit.cell.editor';
 import { CommandManager } from '../command/command.manager';
 import { Command } from '../command/command';
-import { INoopResult } from '../utility/utility';
-import { ColumnModel, IEditorOptions } from '../column-type/column.model';
+import { ColumnModel } from '../column-type/column.model';
 import { Table } from '../dom/table';
 import { Model } from '../infrastructure/model';
-import { View } from '../view/view';
-
+import { EditorOptions } from '../column-type/editor.options';
+import { KeyCode } from '../shortcut/key.code';
+import { CellView } from '../scene/view/cell.view';
 
 /**
  * > Under Construction.
  */
-export declare class EditCellView extends View {
-    constructor(model: Model, table: Table, commandManager: CommandManager);
+export declare class EditCellView {
+	constructor(model: Model, table: Table, shortcut: { register: (commands: Command[]) => void, keyCode: () => KeyCode });
+	
+	readonly enter: Command;
+	readonly commit: Command;
+	readonly push: Command;
+	readonly cancel: Command;
+	readonly reset: Command;
+	readonly exit: Command;
 
-    editor: CellEditor;
-    enter: Command;
-    commit: Command;
-    cancel: Command;
-    reset: Command;
-    exit: Command;
-    value: any;
-    label: any;
-    column: ColumnModel;
-    readonly fetch: INoopResult;
-    readonly options: IEditorOptions;
+	value: any;
+	label: any;
+	requestClose: () => boolean;
+
+	readonly cell: CellView;
+	readonly row: any;
+	readonly column: ColumnModel;
+	readonly options: EditorOptions;
+	readonly editor: CellEditor;
+
+	readonly fetch: any;
+	readonly resetFetch: () => void;
 }

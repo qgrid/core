@@ -1,17 +1,29 @@
-export function filterPipe(data, context, next) {
-	const result = [];
-	if (data.length) {
-		const model = context.model;
-		const filterState = model.filter();
-		const match = filterState.match(context);
+import { Guard } from '../infrastructure/guard';
 
-		for (let i = 0, length = data.length; i < length; i++) {
-			const item = data[i];
-			if (match(item)) {
-				result.push(item);
+export function filterPipe(rows, context, next) {
+	Guard.notNull(rows, 'rows');
+
+	const { model } = context;
+
+	const result = [];
+	if (rows.length) {
+		const { match } = model.filter();
+		const test = match(context);
+
+		for (let i = 0, length = rows.length; i < length; i++) {
+			const row = rows[i];
+			if (test(row)) {
+				result.push(row);
 			}
 		}
 	}
+
+	model.pipe({
+		effect: Object.assign({}, model.pipe().effect, { filter: result })
+	}, {
+			source: 'filter.pipe',
+			behavior: 'core'
+		});
 
 	next(result);
 }

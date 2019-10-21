@@ -1,26 +1,20 @@
 export class VirtualRowStyle {
-	constructor(table) {
-		const model = table.model;
+	constructor(table, style) {
 		this.table = table;
-		this.model = model;
+		this.style = style;
 	}
 
-	applyFactory() {
-		const model = this.model;
-		const styleState = model.style();
-		const style = Composite.func(styleState.rows.concat([styleState.row]));
-		const mapper = this.table.context.mapper;
-		const box = this.table.body.rowBox;
-		const entries = box.entries;
+	visitFactory() {
+		const { style } = this;
+		const { rowBox } = this.table.body;
+		const { entries } = rowBox;
 
 		return (row, context) => {
-			context.row = mapper.viewToRow(context.row);
-
 			const model = {
 				dataIndex: context.row,
 			};
 
-			const key = box.key(model);
+			const key = rowBox.key(model);
 			const classList = entries.get(key);
 			if (classList) {
 				for (let cls of classList) {
@@ -34,26 +28,20 @@ export class VirtualRowStyle {
 }
 
 export class VirtualCellStyle {
-	constructor(table) {
-		const model = table.model;
+	constructor(table, style) {
 		this.table = table;
-		this.model = model;
+		this.style = style;
 	}
 
-	applyFactory() {
-		const model = this.model;
-		const styleState = model.style();
-		const style = Composite.func(styleState.cells.concat([styleState.cell]));
-		const mapper = this.table.context.mapper;
-		const cellBox = this.table.body.cellBox;
+	visitFactory() {
+		const { style } = this;
+		const { cellBox } = this.table.body;
+		const { columnBox } = this.table.body;
+
 		const cellEntries = cellBox.entries;
-		const columnBox = this.table.body.columnBox;
 		const columnEntries = columnBox.entries;
 
 		return (row, column, context) => {
-			context.column = mapper.viewToColumn(context.column);
-			context.row = mapper.viewToRow(context.row);
-
 			// column level
 			const columnModel = {
 				dataIndex: context.column,

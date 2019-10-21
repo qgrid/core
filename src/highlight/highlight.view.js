@@ -1,16 +1,15 @@
-import {View} from '../view';
-import {Command} from '../command';
-import * as columnService from '../column/column.service';
+import { Command } from '../command/command';
 import * as sortService from '../sort/sort.service';
-import {CellSelector} from '../cell';
-import {SelectionService} from '../selection';
-import {noop} from '../utility';
-import {GRID_PREFIX} from '../definition';
+import { CellSelector } from '../cell/cell.selector';
+import { SelectionService } from '../selection/selection.service';
+import { noop } from '../utility/kit';
+import { GRID_PREFIX } from '../definition';
+import { Fastdom } from '../services/fastdom';
+import { find, findLeaves } from '../node/node.service';
 
-export class HighlightView extends View {
+export class HighlightView {
 	constructor(model, table) {
-		super(model);
-
+		this.model = model;
 		this.table = table;
 
 		this.cellSelector = new CellSelector(model, table);
@@ -20,99 +19,117 @@ export class HighlightView extends View {
 		let columnHoverBlurs = [];
 		let rowHoverBlurs = [];
 		let selectionBlurs = [];
+		let cellHoverBlurs = [];
 
 		this.column = new Command({
-			source: 'highlight.view',			
-			canExecute: () => !model.drag().isActive,
+			source: 'highlight.view',
+			canExecute: () => !this.isRendering,
 			execute: (column, state) => {
-				if (!this.isRendering) {
-					const columns = Array.from(model.highlight().columns);
-					const index = columns.indexOf(column.key);
-					let hasChanges = false;
-					if (state) {
-						if (index < 0) {
-							columns.push(column.key);
-							hasChanges = true;
-						}
+				const columns = Array.from(model.highlight().columns);
+				const index = columns.indexOf(column.key);
+				let hasChanges = false;
+				if (state) {
+					if (index < 0) {
+						columns.push(column.key);
+						hasChanges = true;
 					}
-					else {
-						if (index >= 0) {
-							columns.splice(index, 1);
-							hasChanges = true;
-						}
+				}
+				else {
+					if (index >= 0) {
+						columns.splice(index, 1);
+						hasChanges = true;
 					}
+				}
 
-					if (hasChanges) {
-						model.highlight({
-							columns: columns
-						}, {
-							source: 'highlight.view',
-						});
-					}
+				if (hasChanges) {
+					model.highlight({ columns }, {
+						source: 'highlight.view',
+					});
 				}
 			}
 		});
 
 		this.row = new Command({
-			source: 'highlight.view',			
-			canExecute: () => !model.drag().isActive,
+			source: 'highlight.view',
+			canExecute: () => !this.isRendering,
 			execute: (row, state) => {
-				if (!this.isRendering) {
-					const rows = Array.from(model.highlight().rows);
-					const index = rows.indexOf(row);
-					let hasChanges = false;
-					if (state) {
-						if (index < 0) {
-							rows.push(row);
-							hasChanges = true;
-						}
+				const rows = Array.from(model.highlight().rows);
+				const index = rows.indexOf(row);
+				let hasChanges = false;
+				if (state) {
+					if (index < 0) {
+						rows.push(row);
+						hasChanges = true;
 					}
-					else {
-						if (index >= 0) {
-							rows.splice(index, 1);
-							hasChanges = true;
-						}
+				}
+				else {
+					if (index >= 0) {
+						rows.splice(index, 1);
+						hasChanges = true;
 					}
+				}
 
-					if (hasChanges) {
-						model.highlight({
-							rows: rows
-						}, {
-							source: 'highlight.view',
-						});
-					}
+				if (hasChanges) {
+					model.highlight({ rows }, {
+						source: 'highlight.view'
+					});
 				}
 			}
 		});
 
-		this.using(model.selectionChanged.watch(e => {
+		this.cell = new Command({
+			source: 'highlight.view',
+			canExecute: () => !this.isRendering,
+			execute: (newCell, state) => {
+				let { cell } = model.highlight();
+				let hasChanges = true;
+				if (newCell === cell) {
+					hasChanges = false;
+				}
+				else if (newCell && cell) {
+					hasChanges =
+						newCell.rowIndex !== cell.rowIndex
+						|| newCell.columnIndex !== cell.columnIndex;
+				}
+
+				if (hasChanges) {
+					model.highlight({ cell: newCell }, {
+						source: 'highlight.view'
+					});
+				}
+			}
+		});
+
+		model.selectionChanged.watch(e => {
 			if (e.hasChanges('items')) {
 				selectionBlurs = this.invalidateSelection(selectionBlurs);
 			}
-		}));
+		});
 
-		this.using(model.sceneChanged.watch(e => {
+		model.sceneChanged.watch(e => {
 			if (e.hasChanges('status')) {
-				const status = e.state.status;
-				switch (status) {
-					case 'stop':
-						columnHoverBlurs = this.invalidateColumnHover(columnHoverBlurs);
-						rowHoverBlurs = this.invalidateRowHover(rowHoverBlurs);
-						sortBlurs = this.invalidateSortBy(sortBlurs);
-						selectionBlurs = this.invalidateSelection(selectionBlurs);
-						break;
+				if (e.state.status === 'stop') {
+					columnHoverBlurs = this.invalidateColumnHover(columnHoverBlurs);
+					rowHoverBlurs = this.invalidateRowHover(rowHoverBlurs);
+					cellHoverBlurs = this.invalidateCellHover(cellHoverBlurs);
+					sortBlurs = this.invalidateSortBy(sortBlurs);
+					selectionBlurs = this.invalidateSelection(selectionBlurs);
 				}
 			}
-		}));
+		});
 
-		this.using(model.sortChanged.watch(e => {
+		model.sortChanged.watch(e => {
 			if (!this.isRendering && e.hasChanges('by')) {
 				sortBlurs = this.invalidateSortBy(sortBlurs);
 			}
-		}));
+		});
 
-		this.using(model.highlightChanged.watch(e => {
-			if (!this.isRendering && e.tag.source !== 'highlight') {
+		model.highlightChanged.watch(e => {
+			if (!this.isRendering) {
+				if (e.hasChanges('cell')) {
+					cellHoverBlurs = this.invalidateCellHover(cellHoverBlurs);
+				}
+
 				if (e.hasChanges('columns')) {
 					columnHoverBlurs = this.invalidateColumnHover(columnHoverBlurs);
 				}
@@ -121,29 +138,36 @@ export class HighlightView extends View {
 					rowHoverBlurs = this.invalidateRowHover(rowHoverBlurs);
 				}
 			}
-		}));
+		});
 
-		this.using(model.scrollChanged.watch(() => {
-			const highlight = model.highlight;
-			if (highlight().rows.length) {
-				highlight({
-					rows: []
-				}, {
-					source: 'highlight.view',
-				});
+		model.dragChanged.on(e => {
+			if (e.hasChanges('isActive')) {
+				if (e.state.isActive) {
+					model.highlight({
+						columns: [],
+						rows: [],
+						cell: null
+					}, {
+							source: 'highlight.view'
+						});
+
+					columnHoverBlurs = this.invalidateColumnHover(columnHoverBlurs);
+					rowHoverBlurs = this.invalidateRowHover(rowHoverBlurs);
+					cellHoverBlurs = this.invalidateCellHover(cellHoverBlurs);
+				}
 			}
-		}));
+		})
 	}
 
 	get isRendering() {
-		return this.model.scene().status === 'start';
+		return this.model.scene().status !== 'stop' || this.model.drag().isActive;
 	}
 
 	invalidateColumnHover(dispose) {
 		dispose.forEach(f => f());
 		dispose = [];
-		const highlightColumns = this.model.highlight().columns;
-		for (let columnKey of highlightColumns) {
+		const { columns } = this.model.highlight();
+		for (let columnKey of columns) {
 			dispose.push(this.highlightColumn(columnKey, 'highlighted'));
 		}
 
@@ -153,11 +177,23 @@ export class HighlightView extends View {
 	invalidateRowHover(dispose) {
 		dispose.forEach(f => f());
 		dispose = [];
-		const highlightRows = this.model.highlight().rows;
-		for (let rowIndex of highlightRows) {
-			dispose.push(this.highlightRow(rowIndex, 'highlighted'));
+		const { rows } = this.model.highlight();
+		for (let row of rows) {
+			dispose.push(this.highlightRow(row, 'highlighted'));
 		}
 
+		return dispose;
+	}
+
+	invalidateCellHover(dispose) {
+		dispose.forEach(f => f());
+		dispose = [];
+		const { cell } = this.model.highlight();
+		if (cell) {
+			const { body } = this.table;
+			const { rowIndex, columnIndex } = cell;
+			dispose.push(this.highlightCell(body.cell(rowIndex, columnIndex), 'highlighted'));
+		}
 		return dispose;
 	}
 
@@ -184,61 +220,72 @@ export class HighlightView extends View {
 		return dispose;
 	}
 
-	columnIndex(key) {
-		const columns = this.table.data.columns();
-		const index = columnService.findIndex(columns, key);
-		if (index >= 0) {
-			// TODO: add pivot col support
-			const column = columns[index];
-			if (!column.canHighlight) {
-				return -1;
-			}
+	findColumnPosition(key) {
+		const { index } = this.model.columnList();
+		const pos = find(index, node => node.key.model.key === key);
+		if (pos) {
+			return findLeaves(pos.node).map(leaf => leaf.key.columnIndex);
 		}
 
-		return index;
+		return [];
 	}
 
 	highlightColumn(key, cls) {
-		const table = this.table;
-		const index = this.columnIndex(key);
-		if (index < 0) {
+		const position = this.findColumnPosition(key);
+		if (!position.length) {
 			return noop;
 		}
 
-		const head = table.head;
-		head.column(index).addClass(`${GRID_PREFIX}-${cls}`);
-		head.column(index - 1).addClass(`${GRID_PREFIX}-${cls}-prev`);
-		head.column(index + 1).addClass(`${GRID_PREFIX}-${cls}-next`);
-		table.body.column(index).addClass(`${GRID_PREFIX}-${cls}`);
-		table.foot.column(index).addClass(`${GRID_PREFIX}-${cls}`);
+		const { head, body, foot } = this.table;
+		Fastdom.mutate(() => {
+			const isLeaf = position.length === 1;
+			for (let index of position) {
+				if (isLeaf) {
+					head.column(index).addClass(`${GRID_PREFIX}-${cls}`);
+					head.column(index - 1).addClass(`${GRID_PREFIX}-${cls}-prev`);
+					head.column(index + 1).addClass(`${GRID_PREFIX}-${cls}-next`);
+				}
+
+				const bodyColumn = body.column(index);
+				const column = bodyColumn.model();
+				if (column && column.canHighlight) {
+					bodyColumn.addClass(`${GRID_PREFIX}-${cls}`);
+					foot.column(index).addClass(`${GRID_PREFIX}-${cls}`);
+				}
+			}
+		});
 
 		return this.blurColumn(key, cls);
 	}
 
 	blurColumn(key, cls) {
-		const table = this.table;
-		const index = this.columnIndex(key);
-		if (index < 0) {
+		const position = this.findColumnPosition(key);
+		if (!position.length) {
 			return noop;
 		}
 
+		const { head, body, foot } = this.table;
 		return () => {
-			const head = table.head;
-			head.column(index).removeClass(`${GRID_PREFIX}-${cls}`);
-			head.column(index - 1).removeClass(`${GRID_PREFIX}-${cls}-prev`);
-			head.column(index + 1).removeClass(`${GRID_PREFIX}-${cls}-next`);
-			table.body.column(index).removeClass(`${GRID_PREFIX}-${cls}`);
-			table.foot.column(index).removeClass(`${GRID_PREFIX}-${cls}`);
+			Fastdom.mutate(() => {
+				for (let index of position) {
+					head.column(index).removeClass(`${GRID_PREFIX}-${cls}`);
+					head.column(index - 1).removeClass(`${GRID_PREFIX}-${cls}-prev`);
+					head.column(index + 1).removeClass(`${GRID_PREFIX}-${cls}-next`);
+					body.column(index).removeClass(`${GRID_PREFIX}-${cls}`);
+					foot.column(index).removeClass(`${GRID_PREFIX}-${cls}`);
+				}
+			});
 		};
 	}
 
 	highlightRow(index, cls) {
-		const table = this.table;
 		if (index < 0) {
 			return noop;
 		}
 
-		table.body.row(index).addClass(`${GRID_PREFIX}-${cls}`);
+		const { body } = this.table;
+		Fastdom.mutate(() => body.row(index).addClass(`${GRID_PREFIX}-${cls}`));
+
 		return this.blurRow(index, cls);
 	}
 
@@ -248,15 +295,19 @@ export class HighlightView extends View {
 			return noop;
 		}
 
-		return () => table.body.row(index).removeClass(`${GRID_PREFIX}-${cls}`);
+		const row = table.body.row(index);
+		return () => Fastdom.mutate(() => row.removeClass(`${GRID_PREFIX}-${cls}`));
 	}
 
 	highlightCell(cell, cls) {
-		cell.addClass(`${GRID_PREFIX}-${cls}`);
+		Fastdom.mutate(() => {
+			cell.addClass(`${GRID_PREFIX}-${cls}`);
+		});
+
 		return this.blurCell(cell, cls);
 	}
 
 	blurCell(cell, cls) {
-		return () => cell.removeClass(`${GRID_PREFIX}-${cls}`);
+		return () => Fastdom.mutate(() => cell.removeClass(`${GRID_PREFIX}-${cls}`));
 	}
 }
